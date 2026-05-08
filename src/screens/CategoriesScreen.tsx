@@ -1,0 +1,223 @@
+import React, { useState } from 'react';
+import {
+    View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert,
+    KeyboardAvoidingView, Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
+import { useApp } from '../context/AppContext';
+import { Layout, Fonts } from '../constants/theme';
+import { useTheme } from '../hooks/useTheme';
+import { TransactionType } from '../types';
+import { t, isRTL, getFlexDirection, getTextAlign } from '../utils/i18n';
+
+const CategoriesScreen = ({ navigation }: any) => {
+    const { state, dispatch } = useApp();
+    const { colors } = useTheme();
+    const lang = state.settings.language || 'en';
+    const rtl = isRTL(lang);
+    const [filter, setFilter] = useState<'all' | TransactionType>('all');
+    const [showAdd, setShowAdd] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [newEmoji, setNewEmoji] = useState('📌');
+    const [newType, setNewType] = useState<TransactionType>('expense');
+
+    const filteredCategories = state.categories.filter((c) =>
+        filter === 'all' ? true : c.type === filter
+    );
+
+    const getCategoryCount = (catId: string) =>
+        state.transactions.filter((tx) => tx.categoryId === catId).length;
+
+    const getCategoryTotal = (catId: string) =>
+        state.transactions.filter((tx) => tx.categoryId === catId).reduce((s, tx) => s + tx.amount, 0);
+
+    const currency = state.settings.currency;
+    const symbol = currency?.symbol || '$';
+
+    const handleAdd = () => {
+        if (!newName.trim()) return;
+        dispatch({
+            type: 'ADD_CATEGORY',
+            payload: { id: Date.now().toString(), name: newName.trim(), emoji: newEmoji, type: newType },
+        });
+        setNewName('');
+        setNewEmoji('📌');
+        setShowAdd(false);
+    };
+
+    const handleDelete = (id: string, name: string, isDefault?: boolean) => {
+        if (isDefault) { Alert.alert('', lang === 'ar' ? 'لا يمكن حذف الفئات الافتراضية' : "Can't delete default categories"); return; }
+        Alert.alert(t('delete', lang), `${lang === 'ar' ? 'حذف' : 'Delete'} "${name}"?`, [
+            { text: t('cancel', lang), style: 'cancel' },
+            { text: t('delete', lang), style: 'destructive', onPress: () => dispatch({ type: 'DELETE_CATEGORY', payload: id }) },
+        ]);
+    };
+
+    const filters: { label: string; value: 'all' | TransactionType }[] = [
+        { label: t('all', lang), value: 'all' },
+        { label: t('expense', lang), value: 'expense' },
+        { label: t('income', lang), value: 'income' },
+    ];
+
+    return (
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+            {/* Header */}
+            <View style={[styles.header, { flexDirection: getFlexDirection(lang), borderBottomColor: colors.border }]}>
+                <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+                    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                        <Path d={rtl ? "M5 12h14M12 5l7 7-7 7" : "M19 12H5M12 19l-7-7 7-7"} stroke={colors.text} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
+                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('categories', lang)}</Text>
+                <TouchableOpacity style={[styles.addBtn, { backgroundColor: colors.primary }]} onPress={() => setShowAdd(true)}>
+                    <Text style={styles.addBtnText}>+</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Filter Tabs */}
+            <View style={[styles.filterRow, { backgroundColor: colors.card }]}>
+                {filters.map((f) => (
+                    <TouchableOpacity
+                        key={f.value}
+                        style={[styles.filterTab, filter === f.value && { backgroundColor: colors.primary + '15' }]}
+                        onPress={() => setFilter(f.value)}
+                    >
+                        <Text style={[styles.filterText, { color: colors.textSecondary }, filter === f.value && { color: colors.primary, fontFamily: Fonts.bold }]}>{f.label}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            {/* List */}
+            <FlatList
+                data={filteredCategories}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ padding: Layout.spacing.md }}
+                renderItem={({ item }) => {
+                    const count = getCategoryCount(item.id);
+                    const total = getCategoryTotal(item.id);
+                    return (
+                        <TouchableOpacity
+                            style={[styles.catCard, { backgroundColor: colors.card }]}
+                            onLongPress={() => handleDelete(item.id, item.name, item.isDefault)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={[styles.catRow, { flexDirection: getFlexDirection(lang) }]}>
+                                <View style={[styles.catEmoji, { backgroundColor: item.type === 'expense' ? colors.danger + '10' : colors.success + '10' }]}>
+                                    <Text style={{ fontSize: 22 }}>{item.emoji}</Text>
+                                </View>
+                                <View style={[styles.catInfo, rtl && { alignItems: 'flex-end' }]}>
+                                    <Text style={[styles.catName, { color: colors.text }]}>{item.name}</Text>
+                                    <Text style={[styles.catCount, { color: colors.textSecondary }]}>
+                                        {count} {count === 1 ? t('item', lang) : t('items', lang)}
+                                        {item.isDefault ? ` · ${t('default', lang)}` : ''}
+                                    </Text>
+                                </View>
+                                <View style={[styles.catTotal, rtl && { alignItems: 'flex-start' }]}>
+                                    <Text style={[styles.catTotalValue, { color: item.type === 'expense' ? colors.danger : colors.success }]}>
+                                        {symbol}{total.toFixed(2)}
+                                    </Text>
+                                    <Text style={[styles.catType, { color: colors.textSecondary }]}>{t(item.type, lang)}</Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    );
+                }}
+            />
+
+            {/* Add Modal */}
+            <Modal visible={showAdd} transparent animationType="fade">
+                <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+                            <Text style={[styles.modalTitle, { color: colors.text, textAlign: rtl ? 'right' : 'left' }]}>{t('newCategory', lang)}</Text>
+
+                            <View style={[styles.emojiRow, { flexDirection: getFlexDirection(lang) }]}>
+                                <TextInput style={[styles.emojiInput, { borderColor: colors.border, color: colors.text }]} value={newEmoji} onChangeText={(v) => setNewEmoji(v.slice(-2))} maxLength={2} />
+                                <TextInput style={[styles.nameInput, { borderColor: colors.border, color: colors.text, textAlign: rtl ? 'right' : 'left', writingDirection: rtl ? 'rtl' : 'ltr' }]} placeholder={t('categoryName', lang)} placeholderTextColor={colors.textSecondary} value={newName} onChangeText={setNewName} />
+                            </View>
+
+                            <View style={[styles.typeRow, { flexDirection: getFlexDirection(lang) }]}>
+                                <TouchableOpacity
+                                    style={[styles.typeOpt, { borderColor: colors.border }, newType === 'expense' && { borderColor: colors.danger, backgroundColor: colors.danger + '10' }]}
+                                    onPress={() => setNewType('expense')}
+                                >
+                                    <Text style={[styles.typeOptText, { color: colors.textSecondary }, newType === 'expense' && { color: colors.danger }]}>{t('expense', lang)}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.typeOpt, { borderColor: colors.border }, newType === 'income' && { borderColor: colors.success, backgroundColor: colors.success + '10' }]}
+                                    onPress={() => setNewType('income')}
+                                >
+                                    <Text style={[styles.typeOptText, { color: colors.textSecondary }, newType === 'income' && { color: colors.success }]}>{t('income', lang)}</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={[styles.modalBtns, { flexDirection: getFlexDirection(lang) }]}>
+                                <TouchableOpacity style={[styles.modalCancelBtn, { borderColor: colors.border }]} onPress={() => setShowAdd(false)}>
+                                    <Text style={[styles.modalCancelText, { color: colors.textSecondary }]}>{t('cancel', lang)}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.modalSaveBtn, { backgroundColor: colors.primary, opacity: newName.trim() ? 1 : 0.4 }]} onPress={handleAdd} disabled={!newName.trim()}>
+                                    <Text style={styles.modalSaveText}>{t('addCategory', lang)}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+        </SafeAreaView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: { flex: 1 },
+    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Layout.spacing.md, paddingVertical: Layout.spacing.sm, borderBottomWidth: 1 },
+    backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+    headerTitle: { flex: 1, fontFamily: Fonts.bold, fontSize: 20, textAlign: 'center' },
+    addBtn: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+    addBtnText: { color: '#FFF', fontSize: 24, fontFamily: Fonts.bold, marginTop: -2 },
+    filterRow: { flexDirection: 'row', margin: Layout.spacing.md, borderRadius: Layout.borderRadius.md, padding: 4 },
+    filterTab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: Layout.borderRadius.sm },
+    filterText: { fontFamily: Fonts.medium, fontSize: 14 },
+    catCard: { borderRadius: Layout.borderRadius.md, marginBottom: Layout.spacing.sm, padding: Layout.spacing.md, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 2 },
+    catRow: { flexDirection: 'row', alignItems: 'center' },
+    catEmoji: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: Layout.spacing.md },
+    catInfo: { flex: 1 },
+    catName: { fontFamily: Fonts.semiBold, fontSize: 16, writingDirection: 'auto' },
+    catCount: { fontFamily: Fonts.regular, fontSize: 12, marginTop: 2, writingDirection: 'auto' },
+    catTotal: { alignItems: 'flex-end' },
+    catTotalValue: { fontFamily: Fonts.bold, fontSize: 16 },
+    catType: { fontFamily: Fonts.regular, fontSize: 11, marginTop: 2 },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        padding: Layout.spacing.lg
+    },
+    modalContent: {
+        width: '100%',
+        maxWidth: 400,
+        borderRadius: 24,
+        padding: Layout.spacing.lg,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+    },
+    modalTitle: { fontFamily: Fonts.bold, fontSize: 20, marginBottom: Layout.spacing.lg },
+    emojiRow: { flexDirection: 'row', gap: Layout.spacing.sm, marginBottom: Layout.spacing.md },
+    emojiInput: { width: 56, height: 56, borderWidth: 1.5, borderRadius: Layout.borderRadius.md, textAlign: 'center', fontSize: 24 },
+    nameInput: { flex: 1, height: 56, borderWidth: 1.5, borderRadius: Layout.borderRadius.md, paddingHorizontal: Layout.spacing.md, fontFamily: Fonts.medium, fontSize: 16 },
+    typeRow: { flexDirection: 'row', gap: Layout.spacing.sm, marginBottom: Layout.spacing.lg },
+    typeOpt: { flex: 1, paddingVertical: 12, borderRadius: Layout.borderRadius.md, borderWidth: 1.5, alignItems: 'center' },
+    typeOptText: { fontFamily: Fonts.semiBold, fontSize: 15 },
+    modalBtns: { flexDirection: 'row', gap: Layout.spacing.md },
+    modalCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: Layout.borderRadius.md, borderWidth: 1.5, alignItems: 'center' },
+    modalCancelText: { fontFamily: Fonts.semiBold, fontSize: 16 },
+    modalSaveBtn: { flex: 2, paddingVertical: 14, borderRadius: Layout.borderRadius.md, alignItems: 'center' },
+    modalSaveText: { fontFamily: Fonts.bold, fontSize: 16, color: '#FFF' },
+});
+
+export default CategoriesScreen;
