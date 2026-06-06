@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { AppState, Category, Transaction, AppSettings, Currency, BudgetGoal, PaymentMethod, SavingsGoal } from '../types';
 import { loadData, saveData, StorageKeys } from '../utils/storage';
+import { setPrivacyMode } from '../utils/i18n';
 
 // Initial State
 const initialState: AppState = {
@@ -30,6 +31,7 @@ const initialState: AppState = {
         dailyReminderTime: '20:00',
         profileName: '',
         biometricEnabled: false,
+        privacyMode: false,
     },
     budgetGoals: [],
     paymentMethods: [],
@@ -42,6 +44,7 @@ type Action =
     | { type: 'SET_CURRENCY'; payload: Currency }
     | { type: 'SET_ONBOARDING_SEEN' }
     | { type: 'ADD_TRANSACTION'; payload: Transaction }
+    | { type: 'UPDATE_TRANSACTION'; payload: Transaction }
     | { type: 'DELETE_TRANSACTION'; payload: string }
     | { type: 'ADD_CATEGORY'; payload: Category }
     | { type: 'DELETE_CATEGORY'; payload: string }
@@ -56,6 +59,7 @@ type Action =
     | { type: 'SET_DAILY_REMINDER_TIME'; payload: string }
     | { type: 'SET_PROFILE_NAME'; payload: string }
     | { type: 'SET_BIOMETRIC'; payload: boolean }
+    | { type: 'SET_PRIVACY_MODE'; payload: boolean }
     | { type: 'ADD_PAYMENT_METHOD'; payload: PaymentMethod }
     | { type: 'UPDATE_PAYMENT_METHOD'; payload: PaymentMethod }
     | { type: 'DELETE_PAYMENT_METHOD'; payload: string }
@@ -84,6 +88,13 @@ const appReducer = (state: AppState, action: Action): AppState => {
             return {
                 ...state,
                 transactions: [action.payload, ...state.transactions],
+            };
+        case 'UPDATE_TRANSACTION':
+            return {
+                ...state,
+                transactions: state.transactions.map((tx) =>
+                    tx.id === action.payload.id ? action.payload : tx
+                ),
             };
         case 'DELETE_TRANSACTION':
             return {
@@ -161,6 +172,11 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 settings: { ...state.settings, biometricEnabled: action.payload },
             };
+        case 'SET_PRIVACY_MODE':
+            return {
+                ...state,
+                settings: { ...state.settings, privacyMode: action.payload },
+            };
         case 'ADD_PAYMENT_METHOD':
             return {
                 ...state,
@@ -218,6 +234,9 @@ const AppContext = createContext<{
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(appReducer, initialState);
     const [isLoading, setIsLoading] = React.useState(true);
+
+    // Keep the i18n formatter's privacy flag in sync so all formatCurrency() output masks.
+    setPrivacyMode(!!state.settings.privacyMode);
 
     // Load data on mount
     useEffect(() => {

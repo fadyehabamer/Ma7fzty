@@ -46,6 +46,7 @@ export interface AppSettings {
   dailyReminderTime?: string; // HH:mm format
   profileName?: string; // Name shown when sharing payment info
   biometricEnabled?: boolean; // Unlock with Face ID / fingerprint (requires passcode)
+  privacyMode?: boolean; // Hide/mask all amounts across the app
 }
 
 // Supported payment method kinds for the "Share Payment Info" page

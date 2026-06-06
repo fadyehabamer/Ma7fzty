@@ -545,21 +545,21 @@ const SettingsScreen = () => {
                     <View style={[styles.statsDataRow, { flexDirection: getFlexDirection(lang) }]}>
                         <Text style={[styles.statsLabel, { color: colors.text, fontSize: 16 * fontScale }]}>{t('totalIncome', lang)}</Text>
                         <Text style={[styles.statsDataValue, { color: colors.success, fontSize: 16 * fontScale }]}>
-                            {state.settings.currency?.symbol}{totalIncomes.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                            {state.settings.privacyMode ? '••••' : `${state.settings.currency?.symbol}${totalIncomes.toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
                         </Text>
                     </View>
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 16 }]} />
                     <View style={[styles.statsDataRow, { flexDirection: getFlexDirection(lang) }]}>
                         <Text style={[styles.statsLabel, { color: colors.text, fontSize: 16 * fontScale }]}>{t('totalExpenses', lang)}</Text>
                         <Text style={[styles.statsDataValue, { color: colors.danger, fontSize: 16 * fontScale }]}>
-                            {state.settings.currency?.symbol}{totalExpenses.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                            {state.settings.privacyMode ? '••••' : `${state.settings.currency?.symbol}${totalExpenses.toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
                         </Text>
                     </View>
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 16 }]} />
                     <View style={[styles.statsDataRow, { flexDirection: getFlexDirection(lang) }]}>
                         <Text style={[styles.statsLabel, { color: colors.text, fontSize: 16 * fontScale }]}>{t('netBalance', lang)}</Text>
                         <Text style={[styles.statsDataValue, { color: colors.primary, fontSize: 16 * fontScale }]}>
-                            {state.settings.currency?.symbol}{(totalIncomes - totalExpenses).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                            {state.settings.privacyMode ? '••••' : `${state.settings.currency?.symbol}${(totalIncomes - totalExpenses).toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
                         </Text>
                     </View>
                 </View>

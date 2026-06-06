@@ -38,7 +38,8 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
     const [moneyGoal, setMoneyGoal] = useState<SavingsGoal | null>(null);
     const [moneyAmount, setMoneyAmount] = useState('');
 
-    const fmt = (n: number) => `${symbol}${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+    const fmt = (n: number) =>
+        state.settings.privacyMode ? `${symbol}••••` : `${symbol}${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 
     const openAdd = () => {
         setEditingId(null);

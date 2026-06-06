@@ -2,6 +2,7 @@ import 'react-native-gesture-handler';
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import {
@@ -47,11 +48,13 @@ export default function App() {
     }
 
     return (
-        <SafeAreaProvider>
-            <AppProvider>
-                <RootNavigator />
-                <StatusBar style="auto" />
-            </AppProvider>
-        </SafeAreaProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <SafeAreaProvider>
+                <AppProvider>
+                    <RootNavigator />
+                    <StatusBar style="auto" />
+                </AppProvider>
+            </SafeAreaProvider>
+        </GestureHandlerRootView>
     );
 }

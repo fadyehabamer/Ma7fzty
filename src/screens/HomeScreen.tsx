@@ -21,7 +21,7 @@ import BudgetProgress from '../components/common/BudgetProgress';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { Transaction } from '../types';
-import { t, isRTL, getFlexDirection } from '../utils/i18n';
+import { t, isRTL, getFlexDirection, formatCurrency } from '../utils/i18n';
 import { exportToPdf, exportToCsv } from '../utils/exportData';
 import TransactionDetailsModal from '../components/common/TransactionDetailsModal';
 
@@ -32,6 +32,7 @@ const HomeScreen = ({ navigation }: any) => {
     const currency = settings.currency;
     const lang = settings.language || 'en';
     const rtl = isRTL(lang);
+    const fs = settings.fontScale || 1;
 
     const [selectedMonth, setSelectedMonth] = useState(new Date());
     const [searchQuery, setSearchQuery] = useState('');
@@ -94,6 +95,20 @@ const HomeScreen = ({ navigation }: any) => {
         );
     }, [transactions, selectedMonth, viewMode]);
 
+    // "Safe to spend today" — remaining monthly budget split over the days left this month
+    const safeToSpend = useMemo(() => {
+        if (!settings.monthlyBudget || settings.monthlyBudget <= 0) return null;
+        const now = dayjs();
+        const mStart = now.startOf('month').valueOf();
+        const mEnd = now.endOf('month').valueOf();
+        const spent = transactions
+            .filter((tx) => tx.type === 'expense' && tx.date >= mStart && tx.date <= mEnd)
+            .reduce((s, tx) => s + tx.amount, 0);
+        const left = settings.monthlyBudget - spent;
+        const daysLeft = Math.max(1, now.daysInMonth() - now.date() + 1);
+        return { perDay: Math.max(0, left) / daysLeft, daysLeft, over: left <= 0 };
+    }, [transactions, settings.monthlyBudget]);
+
     const handleDeleteTransaction = useCallback(
         (id: string) => {
             Alert.alert(t('deleteTransaction', lang), t('deleteConfirm', lang), [
@@ -107,6 +122,16 @@ const HomeScreen = ({ navigation }: any) => {
             ]);
         },
         [dispatch, lang]
+    );
+
+    const handleEditTransaction = useCallback(
+        (tx: Transaction) => navigation.navigate('AddTransaction', { editTransaction: tx }),
+        [navigation]
+    );
+
+    const handleDuplicateTransaction = useCallback(
+        (tx: Transaction) => dispatch({ type: 'ADD_TRANSACTION', payload: { ...tx, id: Date.now().toString() } }),
+        [dispatch]
     );
 
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -143,6 +168,8 @@ const HomeScreen = ({ navigation }: any) => {
             category={getCategory(item.categoryId)}
             currency={currency}
             onPress={() => setSelectedTransaction(item)}
+            onEdit={() => handleEditTransaction(item)}
+            onDuplicate={() => handleDuplicateTransaction(item)}
             onDelete={() => handleDeleteTransaction(item.id)}
         />
     );
@@ -160,6 +187,12 @@ const HomeScreen = ({ navigation }: any) => {
                     </Text>
                 </View>
                 <View style={styles.headerActions}>
+                    <TouchableOpacity
+                        style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+                        onPress={() => dispatch({ type: 'SET_PRIVACY_MODE', payload: !settings.privacyMode })}
+                    >
+                        <Text style={{ fontSize: 16 }}>{settings.privacyMode ? '🙈' : '👁️'}</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}
                         onPress={() => setShowSearch(!showSearch)}
@@ -228,6 +261,26 @@ const HomeScreen = ({ navigation }: any) => {
                         currency={currency}
                         lang={lang}
                     />
+                </View>
+            )}
+
+            {safeToSpend && (
+                <View style={styles.budgetContainer}>
+                    <View style={[styles.safeCard, { backgroundColor: colors.card, flexDirection: getFlexDirection(lang) }]}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.safeLabel, { color: colors.textSecondary, fontSize: 12 * fs }, rtl && { textAlign: 'right' }]}>
+                                {lang === 'ar' ? '💸 المتاح للصرف اليوم' : '💸 Safe to spend today'}
+                            </Text>
+                            <Text style={[styles.safeValue, { color: safeToSpend.over ? colors.danger : colors.success, fontSize: 22 * fs }, rtl && { textAlign: 'right' }]}>
+                                {safeToSpend.over
+                                    ? (lang === 'ar' ? 'تجاوزت الميزانية' : 'Over budget')
+                                    : formatCurrency(safeToSpend.perDay, currency, lang)}
+                            </Text>
+                        </View>
+                        <Text style={[styles.safeDays, { color: colors.textSecondary, fontSize: 11 * fs }]}>
+                            {safeToSpend.daysLeft} {lang === 'ar' ? 'يوم متبقٍ' : 'days left'}
+                        </Text>
+                    </View>
                 </View>
             )}
 
@@ -350,6 +403,14 @@ const styles = StyleSheet.create({
     toggleText: { fontFamily: Fonts.semiBold, fontSize: 12 },
     summaryContainer: { paddingHorizontal: Layout.spacing.lg, marginBottom: Layout.spacing.md },
     budgetContainer: { paddingHorizontal: Layout.spacing.lg, marginBottom: Layout.spacing.md },
+    safeCard: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        borderRadius: Layout.borderRadius.md, padding: Layout.spacing.md,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 2,
+    },
+    safeLabel: { fontFamily: Fonts.semiBold, fontSize: 12 },
+    safeValue: { fontFamily: Fonts.bold, fontSize: 22, marginTop: 2 },
+    safeDays: { fontFamily: Fonts.medium, fontSize: 11 },
     listContainer: { flex: 1, marginTop: 4 },
     listHeader: {
         flexDirection: 'row',

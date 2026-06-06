@@ -167,10 +167,21 @@ export const getTextAlign = (lang: string): 'left' | 'right' =>
 export const getWritingDirection = (lang: string): 'ltr' | 'rtl' =>
     isRTL(lang) ? 'rtl' : 'ltr';
 
+// Global privacy mode — when on, all amounts are masked. Kept in sync from AppContext.
+let _privacyMode = false;
+export const setPrivacyMode = (v: boolean): void => { _privacyMode = v; };
+export const getPrivacyMode = (): boolean => _privacyMode;
+export const MASK = '••••';
+
 export const formatCurrency = (amount: number, currency: any, lang: string = 'en', includeSymbol: boolean = true): string => {
-    if (!currency) return amount.toFixed(2);
+    if (!currency) return _privacyMode ? MASK : amount.toFixed(2);
     const isAr = lang === 'ar';
     const symbol = isAr ? currency.symbol : currency.code;
+    if (_privacyMode) {
+        return isAr
+            ? `${includeSymbol ? symbol + ' ' : ''}${MASK}`
+            : `${MASK}${includeSymbol ? ' ' + symbol : ''}`;
+    }
     const absAmount = Math.abs(amount).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,

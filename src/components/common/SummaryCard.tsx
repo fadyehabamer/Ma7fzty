@@ -20,6 +20,7 @@ const SummaryCard = ({ income, expense, currency, lang = 'en' }: Props) => {
     const [isVisible, setIsVisible] = useState(true);
     const balance = income - expense;
     const isAr = lang === 'ar';
+    const hidden = !isVisible || !!state.settings.privacyMode;
 
     return (
         <View style={styles.container}>
@@ -81,7 +82,7 @@ const SummaryCard = ({ income, expense, currency, lang = 'en' }: Props) => {
 
                 {/* Middle: Large Balance */}
                 <View style={[styles.amountContainer, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
-                    {isVisible ? (
+                    {!hidden ? (
                         <View style={[styles.amountWrapper, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
                             {isAr && (
                                 <Text style={[styles.currency, { fontSize: 18 * (state.settings.fontScale || 1), marginRight: 6 }]}>

@@ -82,12 +82,19 @@ const AllTransactionsScreen = ({ navigation }: any) => {
 
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
+    const handleEditTransaction = (tx: Transaction) =>
+        navigation.navigate('AddTransaction', { editTransaction: tx });
+    const handleDuplicateTransaction = (tx: Transaction) =>
+        dispatch({ type: 'ADD_TRANSACTION', payload: { ...tx, id: Date.now().toString() } });
+
     const renderTransaction = ({ item }: { item: Transaction }) => (
         <TransactionItem
             transaction={item}
             category={getCategory(item.categoryId)}
             currency={currency}
             onPress={() => setSelectedTransaction(item)}
+            onEdit={() => handleEditTransaction(item)}
+            onDuplicate={() => handleDuplicateTransaction(item)}
             onDelete={() => handleDeleteTransaction(item.id)}
         />
     );

@@ -9,8 +9,9 @@ import dayjs from 'dayjs';
 import { useApp } from '../context/AppContext';
 import { Layout, Fonts } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
-import { TransactionType } from '../types';
+import { TransactionType, Transaction } from '../types';
 import { t, isRTL, getFlexDirection } from '../utils/i18n';
+import { evaluateExpression, hasOperator } from '../utils/calc';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'react-native';
 
@@ -20,15 +21,27 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
     const lang = state.settings.language || 'en';
     const fontScale = state.settings.fontScale || 1;
     const rtl = isRTL(lang);
+    const editTx = route.params?.editTransaction as Transaction | undefined;
     const initData = route.params?.initData;
-    const [amount, setAmount] = useState(initData?.amount || '');
-    const [note, setNote] = useState(initData?.note || '');
-    const [date, setDate] = useState(new Date());
-    const [imageUri, setImageUri] = useState<string | null>(null);
+    const isEditing = !!editTx;
+    const fmtPlain = (clean: string): string => {
+        const parts = clean.split('.');
+        const intPart = parts[0];
+        let formattedInt = '';
+        if (intPart) formattedInt = intPart === '0' ? '0' : parseInt(intPart, 10).toLocaleString('en-US');
+        else if (clean.startsWith('.')) formattedInt = '0';
+        let final = formattedInt;
+        if (clean.includes('.')) final += '.' + (parts[1] || '').slice(0, 2);
+        return final;
+    };
+    const [amount, setAmount] = useState<string>(editTx ? fmtPlain(String(editTx.amount)) : (initData?.amount || ''));
+    const [note, setNote] = useState(editTx?.note ?? initData?.note ?? '');
+    const [date, setDate] = useState(editTx ? new Date(editTx.date) : new Date());
+    const [imageUri, setImageUri] = useState<string | null>(editTx?.imageUri ?? null);
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [calMonth, setCalMonth] = useState(dayjs());
-    const [type, setType] = useState<TransactionType>(initData?.type || 'expense');
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(initData?.categoryId || null);
+    const [calMonth, setCalMonth] = useState(editTx ? dayjs(editTx.date) : dayjs());
+    const [type, setType] = useState<TransactionType>(editTx?.type ?? initData?.type ?? 'expense');
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(editTx?.categoryId ?? initData?.categoryId ?? null);
     const [selectorWidth, setSelectorWidth] = useState(0);
     const slideAnim = useRef(new Animated.Value(0)).current;
     
@@ -88,58 +101,70 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
     };
 
     const handleSave = () => {
-        const numericAmount = amount.replace(/,/g, '');
-        if (!numericAmount || isNaN(Number(numericAmount)) || Number(numericAmount) <= 0) {
+        const numericAmount = evaluateExpression(amount);
+        if (numericAmount == null || isNaN(numericAmount) || numericAmount <= 0) {
             Alert.alert(t('invalidAmount', lang), t('enterValidNumber', lang)); return;
         }
         if (!selectedCategoryId) {
             Alert.alert(t('noCategory', lang), t('pleaseSelectCategory', lang)); return;
         }
-        dispatch({
-            type: 'ADD_TRANSACTION',
-            payload: {
-                id: Date.now().toString(),
-                amount: parseFloat(numericAmount),
-                categoryId: selectedCategoryId,
-                date: date.getTime(),
-                note,
-                imageUri: imageUri || undefined,
-                type
-            },
-        });
+        if (isEditing && editTx) {
+            dispatch({
+                type: 'UPDATE_TRANSACTION',
+                payload: {
+                    ...editTx,
+                    amount: numericAmount,
+                    categoryId: selectedCategoryId,
+                    date: date.getTime(),
+                    note,
+                    imageUri: imageUri || undefined,
+                    type,
+                },
+            });
+        } else {
+            dispatch({
+                type: 'ADD_TRANSACTION',
+                payload: {
+                    id: Date.now().toString(),
+                    amount: numericAmount,
+                    categoryId: selectedCategoryId,
+                    date: date.getTime(),
+                    note,
+                    imageUri: imageUri || undefined,
+                    type,
+                },
+            });
+        }
         navigation.goBack();
     };
 
     const handleAmountChange = (text: string) => {
-        // Strip everything except digits and one dot
-        let clean = text.replace(/[^0-9.]/g, '');
-        const parts = clean.split('.');
-        if (parts.length > 2) clean = parts[0] + '.' + parts.slice(1).join('');
-
-        // Split into integer and decimal
-        const [int, dec] = clean.split('.');
-
-        // Handle integer part with commas
-        let formattedInt = '';
-        if (int) {
-            // Check if it's just '0'
-            if (int === '0') {
-                formattedInt = '0';
-            } else {
-                formattedInt = parseInt(int, 10).toLocaleString('en-US');
-            }
-        } else if (clean.startsWith('.')) {
-            formattedInt = '0';
+        let clean = text.replace(/[^0-9.+\-*/×÷]/g, '').replace(/×/g, '*').replace(/÷/g, '/');
+        if (hasOperator(clean)) {
+            setAmount(clean); // arithmetic expression — keep raw
+        } else {
+            const parts = clean.split('.');
+            if (parts.length > 2) clean = parts[0] + '.' + parts.slice(1).join('');
+            setAmount(fmtPlain(clean));
         }
+    };
 
-        let finalValue = formattedInt;
-        if (clean.includes('.')) {
-            finalValue += '.' + (dec || '').slice(0, 2);
-        }
-        setAmount(finalValue);
+    const appendOperator = (op: string) => {
+        setAmount((prev) => {
+            const p = prev || '';
+            if (p === '') return p; // don't start with an operator
+            if (/[+\-*/]/.test(p[p.length - 1])) return p.slice(0, -1) + op; // replace a trailing operator
+            return p + op;
+        });
+    };
+
+    const applyEquals = () => {
+        const v = evaluateExpression(amount);
+        if (v != null && isFinite(v)) setAmount(fmtPlain(String(v)));
     };
 
     const selectedCat = categories.find((c) => c.id === selectedCategoryId);
+    const computed = hasOperator(amount) ? evaluateExpression(amount) : null;
     const SELECTOR_PAD = 4;
     const half = selectorWidth > 0 ? (selectorWidth - SELECTOR_PAD * 2) / 2 : 0;
     const indicatorWidth = half > 0 ? half : '50%';
@@ -154,7 +179,7 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                             <Path d={rtl ? "M5 12h14M12 5l7 7-7 7" : "M19 12H5M12 19l-7-7 7-7"} stroke={colors.text} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                         </Svg>
                     </TouchableOpacity>
-                    <Text style={[styles.title, { color: colors.text, fontSize: 18 * fontScale }]}>{t('addTransaction', lang)}</Text>
+                    <Text style={[styles.title, { color: colors.text, fontSize: 18 * fontScale }]}>{isEditing ? (lang === 'ar' ? 'تعديل المعاملة' : 'Edit Transaction') : t('addTransaction', lang)}</Text>
                     <View style={{ width: 40 }} />
                 </View>
 
@@ -198,6 +223,23 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                             ) : null}
                         </View>
                     </View>
+
+                    {/* Calculator row */}
+                    <View style={styles.calcRow}>
+                        {['/', '*', '-', '+'].map((op) => (
+                            <TouchableOpacity key={op} style={[styles.calcBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => appendOperator(op)} activeOpacity={0.7}>
+                                <Text style={[styles.calcBtnText, { color: colors.text, fontSize: 20 * fontScale }]}>{op === '*' ? '×' : op === '/' ? '÷' : op}</Text>
+                            </TouchableOpacity>
+                        ))}
+                        <TouchableOpacity style={[styles.calcBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={applyEquals} activeOpacity={0.7}>
+                            <Text style={[styles.calcBtnText, { color: '#FFF', fontSize: 20 * fontScale }]}>=</Text>
+                        </TouchableOpacity>
+                    </View>
+                    {computed != null && (
+                        <Text style={[styles.calcResult, { color: type === 'expense' ? colors.danger : colors.success, fontSize: 15 * fontScale }]}>
+                            = {Math.abs(computed).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lang === 'ar' ? state.settings.currency?.symbol : state.settings.currency?.code}
+                        </Text>
+                    )}
 
                     {/* Category */}
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 14 * fontScale }, rtl && { textAlign: 'right' }]}>{t('category', lang)}</Text>
@@ -371,7 +413,7 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                         style={[styles.saveBtn, { backgroundColor: type === 'expense' ? colors.danger : colors.success, opacity: amount && selectedCategoryId ? 1 : 0.4 }]}
                         onPress={handleSave} activeOpacity={0.8} disabled={!amount || !selectedCategoryId}
                     >
-                        <Text style={[styles.saveBtnText, { fontSize: 18 * fontScale }]}>{type === 'expense' ? t('addExpense', lang) : t('addIncome', lang)}</Text>
+                        <Text style={[styles.saveBtnText, { fontSize: 18 * fontScale }]}>{isEditing ? (lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes') : (type === 'expense' ? t('addExpense', lang) : t('addIncome', lang))}</Text>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
@@ -402,6 +444,10 @@ const styles = StyleSheet.create({
     },
     amountInput: { fontFamily: Fonts.bold, fontSize: 48, minWidth: 120, textAlign: 'center' },
     sectionTitle: { fontFamily: Fonts.semiBold, fontSize: 14, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Layout.spacing.sm, marginTop: Layout.spacing.xs },
+    calcRow: { flexDirection: 'row', gap: Layout.spacing.sm, marginBottom: Layout.spacing.sm },
+    calcBtn: { flex: 1, height: 44, borderRadius: Layout.borderRadius.sm, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    calcBtnText: { fontFamily: Fonts.bold, fontSize: 20 },
+    calcResult: { fontFamily: Fonts.bold, fontSize: 15, textAlign: 'center', marginBottom: Layout.spacing.md, marginTop: -2 },
     categoriesScroll: { marginHorizontal: -Layout.spacing.md, marginBottom: Layout.spacing.lg },
     categoriesScrollContent: { paddingHorizontal: Layout.spacing.md, gap: Layout.spacing.sm, alignItems: 'center' },
     categoryChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, borderWidth: 1.5, gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 2, elevation: 1 },
