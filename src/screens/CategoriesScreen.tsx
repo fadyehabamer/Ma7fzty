@@ -24,6 +24,7 @@ const CategoriesScreen = ({ navigation }: any) => {
     const [newName, setNewName] = useState('');
     const [newEmoji, setNewEmoji] = useState('pricetag');
     const [newType, setNewType] = useState<TransactionType>('expense');
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const filteredCategories = state.categories.filter((c) =>
         filter === 'all' ? true : c.type === filter
@@ -38,22 +39,28 @@ const CategoriesScreen = ({ navigation }: any) => {
     const currency = state.settings.currency;
     const symbol = currency?.symbol || '$';
 
-    const handleAdd = () => {
+    const resetForm = () => { setEditingId(null); setNewName(''); setNewEmoji('pricetag'); setNewType('expense'); };
+    const openAdd = () => { resetForm(); setShowAdd(true); };
+    const openEdit = (cat: { id: string; name: string; emoji: string; type: TransactionType }) => {
+        setEditingId(cat.id); setNewName(cat.name); setNewEmoji(cat.emoji); setNewType(cat.type); setShowAdd(true);
+    };
+    const closeModal = () => { setShowAdd(false); resetForm(); };
+
+    const handleSave = () => {
         if (!newName.trim()) return;
-        dispatch({
-            type: 'ADD_CATEGORY',
-            payload: { id: Date.now().toString(), name: newName.trim(), emoji: newEmoji, type: newType },
-        });
-        setNewName('');
-        setNewEmoji('pricetag');
-        setShowAdd(false);
+        if (editingId) {
+            const existing = state.categories.find((c) => c.id === editingId);
+            dispatch({ type: 'UPDATE_CATEGORY', payload: { id: editingId, name: newName.trim(), emoji: newEmoji, type: newType, isDefault: existing?.isDefault } });
+        } else {
+            dispatch({ type: 'ADD_CATEGORY', payload: { id: Date.now().toString(), name: newName.trim(), emoji: newEmoji, type: newType } });
+        }
+        closeModal();
     };
 
-    const handleDelete = (id: string, name: string, isDefault?: boolean) => {
-        if (isDefault) { Alert.alert('', lang === 'ar' ? 'لا يمكن حذف الفئات الافتراضية' : "Can't delete default categories"); return; }
+    const handleDelete = (id: string, name: string) => {
         Alert.alert(t('delete', lang), `${lang === 'ar' ? 'حذف' : 'Delete'} "${name}"?`, [
             { text: t('cancel', lang), style: 'cancel' },
-            { text: t('delete', lang), style: 'destructive', onPress: () => dispatch({ type: 'DELETE_CATEGORY', payload: id }) },
+            { text: t('delete', lang), style: 'destructive', onPress: () => { dispatch({ type: 'DELETE_CATEGORY', payload: id }); closeModal(); } },
         ]);
     };
 
@@ -73,7 +80,7 @@ const CategoriesScreen = ({ navigation }: any) => {
                     </Svg>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('categories', lang)}</Text>
-                <TouchableOpacity style={[styles.addBtn, { backgroundColor: colors.primary }]} onPress={() => setShowAdd(true)}>
+                <TouchableOpacity style={[styles.addBtn, { backgroundColor: colors.primary }]} onPress={openAdd}>
                     <Text style={styles.addBtnText}>+</Text>
                 </TouchableOpacity>
             </View>
@@ -103,7 +110,8 @@ const CategoriesScreen = ({ navigation }: any) => {
                     return (
                         <TouchableOpacity
                             style={[styles.catCard, { backgroundColor: colors.card }]}
-                            onLongPress={() => handleDelete(item.id, item.name, item.isDefault)}
+                            onPress={() => openEdit(item)}
+                            onLongPress={() => handleDelete(item.id, item.name)}
                             activeOpacity={0.7}
                         >
                             <View style={[styles.catRow, { flexDirection: getFlexDirection(lang) }]}>
@@ -134,7 +142,7 @@ const CategoriesScreen = ({ navigation }: any) => {
                 <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-                            <Text style={[styles.modalTitle, { color: colors.text, textAlign: rtl ? 'right' : 'left' }]}>{t('newCategory', lang)}</Text>
+                            <Text style={[styles.modalTitle, { color: colors.text, textAlign: rtl ? 'right' : 'left' }]}>{editingId ? (lang === 'ar' ? 'تعديل الفئة' : 'Edit Category') : t('newCategory', lang)}</Text>
 
                             <TextInput style={[styles.nameInput, { flex: 0, borderColor: colors.border, color: colors.text, marginBottom: Layout.spacing.md, textAlign: rtl ? 'right' : 'left', writingDirection: rtl ? 'rtl' : 'ltr' }]} placeholder={t('categoryName', lang)} placeholderTextColor={colors.textSecondary} value={newName} onChangeText={setNewName} />
 
@@ -171,13 +179,19 @@ const CategoriesScreen = ({ navigation }: any) => {
                             </View>
 
                             <View style={[styles.modalBtns, { flexDirection: getFlexDirection(lang) }]}>
-                                <TouchableOpacity style={[styles.modalCancelBtn, { borderColor: colors.border }]} onPress={() => setShowAdd(false)}>
+                                <TouchableOpacity style={[styles.modalCancelBtn, { borderColor: colors.border }]} onPress={closeModal}>
                                     <Text style={[styles.modalCancelText, { color: colors.textSecondary }]}>{t('cancel', lang)}</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={[styles.modalSaveBtn, { backgroundColor: colors.primary, opacity: newName.trim() ? 1 : 0.4 }]} onPress={handleAdd} disabled={!newName.trim()}>
-                                    <Text style={styles.modalSaveText}>{t('addCategory', lang)}</Text>
+                                <TouchableOpacity style={[styles.modalSaveBtn, { backgroundColor: colors.primary, opacity: newName.trim() ? 1 : 0.4 }]} onPress={handleSave} disabled={!newName.trim()}>
+                                    <Text style={styles.modalSaveText}>{editingId ? t('save', lang) : t('addCategory', lang)}</Text>
                                 </TouchableOpacity>
                             </View>
+
+                            {editingId && (
+                                <TouchableOpacity style={styles.deleteLink} onPress={() => handleDelete(editingId, newName)} activeOpacity={0.7}>
+                                    <Text style={[styles.deleteLinkText, { color: colors.danger }]}>{lang === 'ar' ? 'حذف الفئة' : 'Delete category'}</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
                 </KeyboardAvoidingView>
@@ -240,6 +254,8 @@ const styles = StyleSheet.create({
     modalCancelText: { fontFamily: Fonts.semiBold, fontSize: 16 },
     modalSaveBtn: { flex: 2, paddingVertical: 14, borderRadius: Layout.borderRadius.md, alignItems: 'center' },
     modalSaveText: { fontFamily: Fonts.bold, fontSize: 16, color: '#FFF' },
+    deleteLink: { alignItems: 'center', paddingVertical: Layout.spacing.md, marginTop: Layout.spacing.xs },
+    deleteLinkText: { fontFamily: Fonts.semiBold, fontSize: 14 },
 });
 
 export default CategoriesScreen;
