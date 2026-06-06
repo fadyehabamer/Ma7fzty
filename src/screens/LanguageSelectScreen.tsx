@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { Layout, Fonts } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -19,7 +20,7 @@ const LanguageSelectScreen = () => {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header Icon */}
             <View style={[styles.iconCircle, { backgroundColor: colors.primary + '15' }]}>
-                <Text style={styles.iconEmoji}>🌍</Text>
+                <Ionicons name="globe-outline" size={48} color={colors.primary} />
             </View>
 
             {/* Title */}

@@ -29,7 +29,7 @@ export interface PaymentTypeDef {
 export const PAYMENT_TYPES: PaymentTypeDef[] = [
     {
         key: 'instapay',
-        emoji: '⚡',
+        emoji: 'flash',
         en: 'InstaPay',
         ar: 'إنستا باي',
         color: '#6C2BD9',
@@ -40,7 +40,7 @@ export const PAYMENT_TYPES: PaymentTypeDef[] = [
     },
     {
         key: 'wallet',
-        emoji: '📱',
+        emoji: 'phone-portrait',
         en: 'Mobile Wallet',
         ar: 'محفظة موبايل',
         color: '#E11D48',
@@ -63,7 +63,7 @@ export const PAYMENT_TYPES: PaymentTypeDef[] = [
     },
     {
         key: 'paypal',
-        emoji: '🅿️',
+        emoji: 'logo-paypal',
         en: 'PayPal',
         ar: 'باي بال',
         color: '#0070BA',
@@ -74,7 +74,7 @@ export const PAYMENT_TYPES: PaymentTypeDef[] = [
     },
     {
         key: 'iban',
-        emoji: '🏦',
+        emoji: 'business',
         en: 'IBAN',
         ar: 'آيبان',
         color: '#1E40AF',
@@ -88,7 +88,7 @@ export const PAYMENT_TYPES: PaymentTypeDef[] = [
     },
     {
         key: 'bank',
-        emoji: '💳',
+        emoji: 'card',
         en: 'Bank Account',
         ar: 'حساب بنكي',
         color: '#0F766E',
@@ -101,7 +101,7 @@ export const PAYMENT_TYPES: PaymentTypeDef[] = [
     },
     {
         key: 'crypto',
-        emoji: '₿',
+        emoji: 'logo-bitcoin',
         en: 'Crypto',
         ar: 'عملة رقمية',
         color: '#F7931A',
@@ -113,7 +113,7 @@ export const PAYMENT_TYPES: PaymentTypeDef[] = [
     },
     {
         key: 'other',
-        emoji: '🔗',
+        emoji: 'link',
         en: 'Other',
         ar: 'أخرى',
         color: '#64748B',

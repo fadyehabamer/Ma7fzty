@@ -12,6 +12,9 @@ import { useTheme } from '../hooks/useTheme';
 import { Layout, Fonts } from '../constants/theme';
 import { isRTL, getFlexDirection } from '../utils/i18n';
 import { SavingsGoal } from '../types';
+import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/common/AppIcon';
+import { PICKER_ICONS } from '../constants/icons';
 
 const SavingsGoalsScreen = ({ navigation }: any) => {
     const { state, dispatch } = useApp();
@@ -28,7 +31,7 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [fName, setFName] = useState('');
-    const [fEmoji, setFEmoji] = useState('🎯');
+    const [fEmoji, setFEmoji] = useState('flag');
     const [fTarget, setFTarget] = useState('');
     const [fSaved, setFSaved] = useState('');
     const [fDeadline, setFDeadline] = useState<Date | null>(null);
@@ -43,7 +46,7 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
 
     const openAdd = () => {
         setEditingId(null);
-        setFName(''); setFEmoji('🎯'); setFTarget(''); setFSaved(''); setFDeadline(null);
+        setFName(''); setFEmoji('flag'); setFTarget(''); setFSaved(''); setFDeadline(null);
         setShowForm(true);
     };
 
@@ -70,12 +73,12 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
             const existing = goals.find((x) => x.id === editingId);
             dispatch({
                 type: 'UPDATE_SAVINGS_GOAL',
-                payload: { id: editingId, name, emoji: fEmoji || '🎯', targetAmount: target, savedAmount: Math.max(0, saved), createdAt: existing?.createdAt || Date.now(), deadline: fDeadline ? fDeadline.getTime() : undefined },
+                payload: { id: editingId, name, emoji: fEmoji || 'flag', targetAmount: target, savedAmount: Math.max(0, saved), createdAt: existing?.createdAt || Date.now(), deadline: fDeadline ? fDeadline.getTime() : undefined },
             });
         } else {
             dispatch({
                 type: 'ADD_SAVINGS_GOAL',
-                payload: { id: Date.now().toString(), name, emoji: fEmoji || '🎯', targetAmount: target, savedAmount: Math.max(0, saved), createdAt: Date.now(), deadline: fDeadline ? fDeadline.getTime() : undefined },
+                payload: { id: Date.now().toString(), name, emoji: fEmoji || 'flag', targetAmount: target, savedAmount: Math.max(0, saved), createdAt: Date.now(), deadline: fDeadline ? fDeadline.getTime() : undefined },
             });
         }
         setShowForm(false);
@@ -135,7 +138,7 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
 
                     {goals.length === 0 ? (
                         <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-                            <Text style={{ fontSize: 40 }}>🎯</Text>
+                            <Ionicons name="flag-outline" size={44} color={colors.textSecondary} />
                             <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: 14 * fontScale }]}>
                                 {isAr ? 'لا توجد أهداف ادخار بعد' : 'No savings goals yet'}
                             </Text>
@@ -155,7 +158,7 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
                                 >
                                     <View style={[styles.goalTop, { flexDirection: getFlexDirection(lang) }]}>
                                         <View style={[styles.goalBadge, { backgroundColor: barColor + '1A' }]}>
-                                            <Text style={{ fontSize: 22 }}>{g.emoji}</Text>
+                                            <AppIcon name={g.emoji} size={22} color={barColor} />
                                         </View>
                                         <View style={[styles.goalInfo, rtl && { alignItems: 'flex-end' }]}>
                                             <Text style={[styles.goalName, { color: colors.text, fontSize: 16 * fontScale }]} numberOfLines={1}>{g.name}</Text>
@@ -174,7 +177,7 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
                                     <View style={[styles.goalBottom, { flexDirection: getFlexDirection(lang) }]}>
                                         <Text style={[styles.goalMeta, { color: colors.textSecondary, fontSize: 12 * fontScale }]}>
                                             {done
-                                                ? (isAr ? '🎉 تم تحقيق الهدف' : '🎉 Goal reached')
+                                                ? (isAr ? 'تم تحقيق الهدف' : 'Goal reached')
                                                 : (isAr ? `متبقي ${fmt(remaining)}` : `${fmt(remaining)} to go`)}
                                             {g.deadline ? ` · ${dayjs(g.deadline).format('MMM D, YYYY')}` : ''}
                                         </Text>
@@ -214,16 +217,29 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
                             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ maxHeight: 420 }}>
                                 <View style={[styles.emojiNameRow, { flexDirection: getFlexDirection(lang) }]}>
                                     <TextInput
-                                        style={[styles.emojiInput, { borderColor: colors.border, color: colors.text }]}
-                                        value={fEmoji} onChangeText={(v) => setFEmoji(v.slice(-2))} maxLength={2}
-                                    />
-                                    <TextInput
                                         style={[styles.fieldInput, { flex: 1, color: colors.text, borderColor: colors.border, fontSize: 15 * fontScale }, rtl && { textAlign: 'right' }]}
                                         placeholder={isAr ? 'اسم الهدف (مثال: سيارة)' : 'Goal name (e.g. New car)'}
                                         placeholderTextColor={colors.textSecondary}
                                         value={fName} onChangeText={setFName}
                                     />
                                 </View>
+
+                                <Text style={[styles.fieldLabel, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>{isAr ? 'الأيقونة' : 'Icon'}</Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.iconRowScroll} contentContainerStyle={styles.iconRow} keyboardShouldPersistTaps="handled">
+                                    {PICKER_ICONS.map((ic) => {
+                                        const active = fEmoji === ic;
+                                        return (
+                                            <TouchableOpacity
+                                                key={ic}
+                                                style={[styles.iconCell, { borderColor: colors.border }, active && { borderColor: colors.primary, backgroundColor: colors.primary + '15' }]}
+                                                onPress={() => setFEmoji(ic)}
+                                                activeOpacity={0.7}
+                                            >
+                                                <Ionicons name={ic as any} size={20} color={active ? colors.primary : colors.text} />
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </ScrollView>
 
                                 <Text style={[styles.fieldLabel, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>{isAr ? 'المبلغ المستهدف' : 'Target amount'}</Text>
                                 <TextInput
@@ -246,7 +262,7 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
                                     </TouchableOpacity>
                                     {fDeadline && (
                                         <TouchableOpacity onPress={() => setFDeadline(null)} style={styles.clearDateBtn}>
-                                            <Text style={{ color: colors.danger, fontSize: 16 }}>✕</Text>
+                                            <Ionicons name="close" size={18} color={colors.danger} />
                                         </TouchableOpacity>
                                     )}
                                 </View>
@@ -284,9 +300,12 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
                 <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                     <View style={styles.centerOverlay}>
                         <View style={[styles.moneySheet, { backgroundColor: colors.card }]}>
-                            <Text style={[styles.modalTitle, { color: colors.text, fontSize: 17 * fontScale }]} numberOfLines={1}>
-                                {moneyGoal?.emoji} {moneyGoal?.name}
-                            </Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: Layout.spacing.md }}>
+                                <AppIcon name={moneyGoal?.emoji} size={20} color={colors.text} />
+                                <Text style={[styles.modalTitle, { color: colors.text, fontSize: 17 * fontScale, marginBottom: 0 }]} numberOfLines={1}>
+                                    {moneyGoal?.name}
+                                </Text>
+                            </View>
                             <TextInput
                                 style={[styles.moneyInput, { color: colors.text, borderColor: colors.primary, fontSize: 28 * fontScale }]}
                                 placeholder={`${symbol}0`} keyboardType="numeric" value={moneyAmount} onChangeText={setMoneyAmount} placeholderTextColor={colors.textSecondary} autoFocus
@@ -354,6 +373,10 @@ const styles = StyleSheet.create({
 
     emojiNameRow: { flexDirection: 'row', alignItems: 'center', gap: Layout.spacing.sm },
     emojiInput: { width: 52, height: 48, borderWidth: 1, borderRadius: Layout.borderRadius.sm, textAlign: 'center', fontSize: 22 },
+    iconPickerWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Layout.spacing.sm, marginBottom: Layout.spacing.md },
+    iconRowScroll: { marginBottom: Layout.spacing.md },
+    iconRow: { flexDirection: 'row', gap: Layout.spacing.sm, paddingVertical: 2 },
+    iconCell: { width: 46, height: 46, borderRadius: Layout.borderRadius.md, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
     fieldLabel: { fontFamily: Fonts.semiBold, fontSize: 12, marginTop: Layout.spacing.md, marginBottom: 6 },
     fieldInput: { borderWidth: 1, borderRadius: Layout.borderRadius.sm, paddingHorizontal: Layout.spacing.md, paddingVertical: Platform.OS === 'ios' ? 12 : 8, fontFamily: Fonts.medium, fontSize: 15, minHeight: 48 },
 

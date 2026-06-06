@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { useApp } from '../context/AppContext';
 import { Layout, Fonts } from '../constants/theme';
@@ -193,7 +194,7 @@ const CalendarScreen = () => {
                 ListEmptyComponent={
                     selectedDate ? (
                         <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyEmoji}>📭</Text>
+                            <Ionicons name="receipt-outline" size={40} color={colors.textSecondary} style={{ marginBottom: Layout.spacing.sm }} />
                             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('noTransactions', lang)}</Text>
                         </View>
                     ) : null

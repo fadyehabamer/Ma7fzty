@@ -7,16 +7,16 @@ import { setPrivacyMode } from '../utils/i18n';
 const initialState: AppState = {
     transactions: [],
     categories: [
-        { id: '1', name: 'Food', emoji: '🍔', type: 'expense', isDefault: true },
-        { id: '2', name: 'Transport', emoji: '🚗', type: 'expense', isDefault: true },
-        { id: '3', name: 'Rent', emoji: '🏠', type: 'expense', isDefault: true },
-        { id: '4', name: 'Utilities', emoji: '💡', type: 'expense', isDefault: true },
-        { id: '5', name: 'Shopping', emoji: '🛒', type: 'expense', isDefault: true },
-        { id: '6', name: 'Entertainment', emoji: '🎮', type: 'expense', isDefault: true },
-        { id: '7', name: 'Health', emoji: '🏥', type: 'expense', isDefault: true },
-        { id: '8', name: 'Salary', emoji: '💼', type: 'income', isDefault: true },
-        { id: '9', name: 'Freelance', emoji: '💻', type: 'income', isDefault: true },
-        { id: '10', name: 'Gift', emoji: '🎁', type: 'income', isDefault: true },
+        { id: '1', name: 'Food', emoji: 'fast-food', type: 'expense', isDefault: true },
+        { id: '2', name: 'Transport', emoji: 'car', type: 'expense', isDefault: true },
+        { id: '3', name: 'Rent', emoji: 'home', type: 'expense', isDefault: true },
+        { id: '4', name: 'Utilities', emoji: 'bulb', type: 'expense', isDefault: true },
+        { id: '5', name: 'Shopping', emoji: 'cart', type: 'expense', isDefault: true },
+        { id: '6', name: 'Entertainment', emoji: 'game-controller', type: 'expense', isDefault: true },
+        { id: '7', name: 'Health', emoji: 'medkit', type: 'expense', isDefault: true },
+        { id: '8', name: 'Salary', emoji: 'briefcase', type: 'income', isDefault: true },
+        { id: '9', name: 'Freelance', emoji: 'laptop', type: 'income', isDefault: true },
+        { id: '10', name: 'Gift', emoji: 'gift', type: 'income', isDefault: true },
     ],
     settings: {
         currency: null,
@@ -47,6 +47,7 @@ type Action =
     | { type: 'UPDATE_TRANSACTION'; payload: Transaction }
     | { type: 'DELETE_TRANSACTION'; payload: string }
     | { type: 'ADD_CATEGORY'; payload: Category }
+    | { type: 'UPDATE_CATEGORY'; payload: Category }
     | { type: 'DELETE_CATEGORY'; payload: string }
     | { type: 'SET_MONTHLY_BUDGET'; payload: number }
     | { type: 'SET_BUDGET_GOAL'; payload: BudgetGoal }
@@ -105,6 +106,13 @@ const appReducer = (state: AppState, action: Action): AppState => {
             return {
                 ...state,
                 categories: [...state.categories, action.payload],
+            };
+        case 'UPDATE_CATEGORY':
+            return {
+                ...state,
+                categories: state.categories.map((c) =>
+                    c.id === action.payload.id ? action.payload : c
+                ),
             };
         case 'DELETE_CATEGORY':
             return {

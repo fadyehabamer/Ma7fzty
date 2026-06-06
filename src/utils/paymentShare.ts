@@ -29,7 +29,7 @@ export const methodPreview = (method: PaymentMethod, lang: string): string => {
 // Format a single method's full details as text lines.
 export const buildMethodLines = (method: PaymentMethod, lang: string): string => {
     const def = getPaymentType(method.type);
-    const lines: string[] = [`${def.emoji} ${methodTitle(method, lang)}`];
+    const lines: string[] = [methodTitle(method, lang)];
     def.fields.forEach((f) => {
         const raw = (method.fields[f.key] || '').trim();
         if (!raw) return;
@@ -47,6 +47,6 @@ export const buildShareText = (
 ): string => {
     const heading = lang === 'ar' ? 'معلومات الدفع' : 'Payment Info';
     const name = profileName?.trim();
-    const header = name ? `💳 ${name} — ${heading}` : `💳 ${heading}`;
+    const header = name ? `${name} — ${heading}` : heading;
     return [header, '', ...methods.map((m) => buildMethodLines(m, lang))].join('\n');
 };

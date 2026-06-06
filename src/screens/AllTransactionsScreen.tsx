@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Transaction } from '../types';
 import { t, isRTL, getFlexDirection } from '../utils/i18n';
 import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import TransactionDetailsModal from '../components/common/TransactionDetailsModal';
 
 const AllTransactionsScreen = ({ navigation }: any) => {
@@ -171,7 +172,7 @@ const AllTransactionsScreen = ({ navigation }: any) => {
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyEmoji}>📭</Text>
+                        <Ionicons name="receipt-outline" size={48} color={colors.textSecondary} style={{ marginBottom: Layout.spacing.md }} />
                         <Text style={[styles.emptyText, { color: colors.text }]}>{t('noTransactions', lang)}</Text>
                     </View>
                 }

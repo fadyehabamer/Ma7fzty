@@ -6,6 +6,8 @@ import { Transaction, Category, Currency } from '../../types';
 import dayjs from 'dayjs';
 import { useApp } from '../../context/AppContext';
 import { t, isRTL, formatCurrency } from '../../utils/i18n';
+import AppIcon from './AppIcon';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
     visible: boolean;
@@ -34,7 +36,7 @@ const TransactionDetailsModal = ({ visible, transaction, category, currency, onC
                     {/* Header with Emoji */}
                     <View style={styles.header}>
                         <View style={[styles.emojiContainer, { backgroundColor: color + '15' }]}>
-                            <Text style={styles.emoji}>{category.emoji}</Text>
+                            <AppIcon name={category.emoji} size={26} color={color} />
                         </View>
                         <View style={{ flex: 1 }}>
                             <Text style={[styles.categoryName, { color: colors.text }]}>{category.name}</Text>
@@ -43,7 +45,7 @@ const TransactionDetailsModal = ({ visible, transaction, category, currency, onC
                             </Text>
                         </View>
                         <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                            <Text style={[styles.closeBtnText, { color: colors.textSecondary }]}>✕</Text>
+                            <Ionicons name="close" size={22} color={colors.textSecondary} />
                         </TouchableOpacity>
                     </View>
 

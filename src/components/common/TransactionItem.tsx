@@ -1,6 +1,8 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
+import AppIcon from './AppIcon';
 import dayjs from 'dayjs';
 import { Layout, Fonts } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
@@ -36,19 +38,19 @@ const TransactionItem = ({ transaction, category, currency, onPress, onEdit, onD
         <View style={styles.actions}>
             {onEdit && (
                 <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.primary }]} onPress={() => run(onEdit)} activeOpacity={0.8}>
-                    <Text style={styles.actionEmoji}>✏️</Text>
+                    <Ionicons name="create-outline" size={20} color="#FFFFFF" />
                     <Text style={styles.actionLabel}>{lang === 'ar' ? 'تعديل' : 'Edit'}</Text>
                 </TouchableOpacity>
             )}
             {onDuplicate && (
                 <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.info || '#0EA5E9' }]} onPress={() => run(onDuplicate)} activeOpacity={0.8}>
-                    <Text style={styles.actionEmoji}>⧉</Text>
+                    <Ionicons name="copy-outline" size={20} color="#FFFFFF" />
                     <Text style={styles.actionLabel}>{lang === 'ar' ? 'نسخ' : 'Copy'}</Text>
                 </TouchableOpacity>
             )}
             {onDelete && (
                 <TouchableOpacity style={[styles.actionBtn, styles.actionBtnLast, { backgroundColor: colors.danger }]} onPress={() => run(onDelete)} activeOpacity={0.8}>
-                    <Text style={styles.actionEmoji}>🗑️</Text>
+                    <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
                     <Text style={styles.actionLabel}>{lang === 'ar' ? 'حذف' : 'Delete'}</Text>
                 </TouchableOpacity>
             )}
@@ -58,12 +60,12 @@ const TransactionItem = ({ transaction, category, currency, onPress, onEdit, onD
     const row = (
         <TouchableOpacity style={[styles.container, { backgroundColor: colors.card }]} onPress={onPress} activeOpacity={0.7}>
             <View style={[styles.emojiContainer, { backgroundColor: bgTint }]}>
-                <Text style={styles.emoji}>{category.emoji}</Text>
+                <AppIcon name={category.emoji} size={22} color={color} />
             </View>
             <View style={styles.content}>
                 <View style={styles.categoryRow}>
                     <Text style={[styles.category, { color: colors.text, fontSize: 16 * fs }]}>{category.name}</Text>
-                    {transaction.imageUri && <Text style={[styles.iconIndicator, { fontSize: 12 * fs }]}>📷</Text>}
+                    {transaction.imageUri && <Ionicons name="camera" size={12 * fs} color={colors.textSecondary} style={styles.iconIndicator} />}
                 </View>
                 {transaction.note ? (
                     <Text style={[styles.note, { color: colors.textSecondary, fontSize: 14 * fs }]} numberOfLines={1}>
@@ -87,35 +89,50 @@ const TransactionItem = ({ transaction, category, currency, onPress, onEdit, onD
         </TouchableOpacity>
     );
 
-    if (!hasActions) return <View style={styles.wrap}>{row}</View>;
+    if (!hasActions) {
+        return (
+            <View style={[styles.shadowWrap, { backgroundColor: colors.card }]}>
+                <View style={styles.clip}>{row}</View>
+            </View>
+        );
+    }
 
     return (
-        <Swipeable
-            ref={swipeRef}
-            containerStyle={styles.wrap}
-            renderRightActions={rtl ? undefined : renderActions}
-            renderLeftActions={rtl ? renderActions : undefined}
-            overshootRight={false}
-            overshootLeft={false}
-            friction={2}
-        >
-            {row}
-        </Swipeable>
+        <View style={[styles.shadowWrap, { backgroundColor: colors.card }]}>
+            <Swipeable
+                ref={swipeRef}
+                containerStyle={styles.clip}
+                renderRightActions={rtl ? undefined : renderActions}
+                renderLeftActions={rtl ? renderActions : undefined}
+                overshootRight={false}
+                overshootLeft={false}
+                friction={2}
+            >
+                {row}
+            </Swipeable>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    wrap: { marginBottom: Layout.spacing.sm },
+    shadowWrap: {
+        marginBottom: Layout.spacing.sm,
+        borderRadius: Layout.borderRadius.md,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    clip: {
+        borderRadius: Layout.borderRadius.md,
+        overflow: 'hidden',
+    },
     container: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: Layout.spacing.md,
         borderRadius: Layout.borderRadius.md,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 3,
-        elevation: 2,
     },
     emojiContainer: {
         width: 44,

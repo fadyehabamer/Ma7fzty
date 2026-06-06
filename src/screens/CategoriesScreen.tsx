@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import {
     View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert,
-    KeyboardAvoidingView, Platform,
+    KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { Layout, Fonts } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { TransactionType } from '../types';
 import { t, isRTL, getFlexDirection, getTextAlign } from '../utils/i18n';
+import AppIcon from '../components/common/AppIcon';
+import { PICKER_ICONS } from '../constants/icons';
 
 const CategoriesScreen = ({ navigation }: any) => {
     const { state, dispatch } = useApp();
@@ -19,7 +22,7 @@ const CategoriesScreen = ({ navigation }: any) => {
     const [filter, setFilter] = useState<'all' | TransactionType>('all');
     const [showAdd, setShowAdd] = useState(false);
     const [newName, setNewName] = useState('');
-    const [newEmoji, setNewEmoji] = useState('📌');
+    const [newEmoji, setNewEmoji] = useState('pricetag');
     const [newType, setNewType] = useState<TransactionType>('expense');
 
     const filteredCategories = state.categories.filter((c) =>
@@ -42,7 +45,7 @@ const CategoriesScreen = ({ navigation }: any) => {
             payload: { id: Date.now().toString(), name: newName.trim(), emoji: newEmoji, type: newType },
         });
         setNewName('');
-        setNewEmoji('📌');
+        setNewEmoji('pricetag');
         setShowAdd(false);
     };
 
@@ -104,8 +107,8 @@ const CategoriesScreen = ({ navigation }: any) => {
                             activeOpacity={0.7}
                         >
                             <View style={[styles.catRow, { flexDirection: getFlexDirection(lang) }]}>
-                                <View style={[styles.catEmoji, { backgroundColor: item.type === 'expense' ? colors.danger + '10' : colors.success + '10' }]}>
-                                    <Text style={{ fontSize: 22 }}>{item.emoji}</Text>
+                                <View style={[styles.catEmoji, { backgroundColor: item.type === 'expense' ? colors.danger + '10' : colors.success + '10' }, rtl && { marginRight: 0, marginLeft: Layout.spacing.md }]}>
+                                    <AppIcon name={item.emoji} size={22} color={item.type === 'expense' ? colors.danger : colors.success} />
                                 </View>
                                 <View style={[styles.catInfo, rtl && { alignItems: 'flex-end' }]}>
                                     <Text style={[styles.catName, { color: colors.text }]}>{item.name}</Text>
@@ -133,10 +136,24 @@ const CategoriesScreen = ({ navigation }: any) => {
                         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
                             <Text style={[styles.modalTitle, { color: colors.text, textAlign: rtl ? 'right' : 'left' }]}>{t('newCategory', lang)}</Text>
 
-                            <View style={[styles.emojiRow, { flexDirection: getFlexDirection(lang) }]}>
-                                <TextInput style={[styles.emojiInput, { borderColor: colors.border, color: colors.text }]} value={newEmoji} onChangeText={(v) => setNewEmoji(v.slice(-2))} maxLength={2} />
-                                <TextInput style={[styles.nameInput, { borderColor: colors.border, color: colors.text, textAlign: rtl ? 'right' : 'left', writingDirection: rtl ? 'rtl' : 'ltr' }]} placeholder={t('categoryName', lang)} placeholderTextColor={colors.textSecondary} value={newName} onChangeText={setNewName} />
-                            </View>
+                            <TextInput style={[styles.nameInput, { flex: 0, borderColor: colors.border, color: colors.text, marginBottom: Layout.spacing.md, textAlign: rtl ? 'right' : 'left', writingDirection: rtl ? 'rtl' : 'ltr' }]} placeholder={t('categoryName', lang)} placeholderTextColor={colors.textSecondary} value={newName} onChangeText={setNewName} />
+
+                            <Text style={[styles.pickerLabel, { color: colors.textSecondary, textAlign: rtl ? 'right' : 'left' }]}>{lang === 'ar' ? 'اختر أيقونة' : 'Choose an icon'}</Text>
+                            <ScrollView horizontal style={styles.iconScroll} contentContainerStyle={styles.iconRow} showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                                {PICKER_ICONS.map((ic) => {
+                                    const active = newEmoji === ic;
+                                    return (
+                                        <TouchableOpacity
+                                            key={ic}
+                                            style={[styles.iconCell, { borderColor: colors.border }, active && { borderColor: colors.primary, backgroundColor: colors.primary + '15' }]}
+                                            onPress={() => setNewEmoji(ic)}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name={ic as any} size={22} color={active ? colors.primary : colors.text} />
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
 
                             <View style={[styles.typeRow, { flexDirection: getFlexDirection(lang) }]}>
                                 <TouchableOpacity
@@ -209,6 +226,11 @@ const styles = StyleSheet.create({
     modalTitle: { fontFamily: Fonts.bold, fontSize: 20, marginBottom: Layout.spacing.lg },
     emojiRow: { flexDirection: 'row', gap: Layout.spacing.sm, marginBottom: Layout.spacing.md },
     emojiInput: { width: 56, height: 56, borderWidth: 1.5, borderRadius: Layout.borderRadius.md, textAlign: 'center', fontSize: 24 },
+    pickerLabel: { fontFamily: Fonts.semiBold, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Layout.spacing.sm },
+    iconScroll: { marginBottom: Layout.spacing.lg },
+    iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Layout.spacing.sm },
+    iconRow: { flexDirection: 'row', gap: Layout.spacing.sm, paddingVertical: 2 },
+    iconCell: { width: 48, height: 48, borderRadius: Layout.borderRadius.md, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
     nameInput: { flex: 1, height: 56, borderWidth: 1.5, borderRadius: Layout.borderRadius.md, paddingHorizontal: Layout.spacing.md, fontFamily: Fonts.medium, fontSize: 16 },
     typeRow: { flexDirection: 'row', gap: Layout.spacing.sm, marginBottom: Layout.spacing.lg },
     typeOpt: { flex: 1, paddingVertical: 12, borderRadius: Layout.borderRadius.md, borderWidth: 1.5, alignItems: 'center' },

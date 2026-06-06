@@ -9,6 +9,7 @@ import PieChart from '../components/common/PieChart';
 import AreaChart from '../components/common/AreaChart';
 import MonthSelector from '../components/common/MonthSelector';
 import { t, isRTL, getFlexDirection, formatCurrency } from '../utils/i18n';
+import { Ionicons } from '@expo/vector-icons';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -157,7 +158,7 @@ const ChartsScreen = () => {
                         </View>
                     ) : (
                         <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyEmoji}>📊</Text>
+                            <Ionicons name="bar-chart-outline" size={44} color={colors.textSecondary} style={{ marginBottom: Layout.spacing.sm }} />
                             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{lang === 'ar' ? 'لا توجد بيانات' : 'No data for this month'}</Text>
                         </View>
                     )}

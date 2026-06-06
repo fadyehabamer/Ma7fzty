@@ -20,6 +20,7 @@ import MonthSelector from '../components/common/MonthSelector';
 import BudgetProgress from '../components/common/BudgetProgress';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { Transaction } from '../types';
 import { t, isRTL, getFlexDirection, formatCurrency } from '../utils/i18n';
 import { exportToPdf, exportToCsv } from '../utils/exportData';
@@ -39,6 +40,7 @@ const HomeScreen = ({ navigation }: any) => {
     const [showSearch, setShowSearch] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
     const [viewMode, setViewMode] = useState<'month' | 'all'>('month');
+    const [budgetOpen, setBudgetOpen] = useState(false);
     const prevTxCount = useRef(transactions.length);
 
     // When a single new transaction is added, jump to its month
@@ -180,7 +182,7 @@ const HomeScreen = ({ navigation }: any) => {
             <View style={[styles.header, { flexDirection: getFlexDirection(lang) }]}>
                 <View>
                     <Text style={[styles.greeting, { color: colors.textSecondary, fontSize: 13 * (state.settings.fontScale || 1) }, rtl && { textAlign: 'right' }]}>
-                        {greetingText} 👋
+                        {greetingText}
                     </Text>
                     <Text style={[styles.title, { color: colors.text, fontSize: 22 * (state.settings.fontScale || 1) }, rtl && { textAlign: 'right' }]}>
                         {t('myWallet', lang)}
@@ -191,13 +193,13 @@ const HomeScreen = ({ navigation }: any) => {
                         style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}
                         onPress={() => dispatch({ type: 'SET_PRIVACY_MODE', payload: !settings.privacyMode })}
                     >
-                        <Text style={{ fontSize: 16 }}>{settings.privacyMode ? '🙈' : '👁️'}</Text>
+                        <Ionicons name={settings.privacyMode ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.text} />
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}
                         onPress={() => setShowSearch(!showSearch)}
                     >
-                        <Text style={{ fontSize: 16 }}>{showSearch ? '✕' : '🔍'}</Text>
+                        <Ionicons name={showSearch ? 'close' : 'search-outline'} size={18} color={colors.text} />
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -253,34 +255,46 @@ const HomeScreen = ({ navigation }: any) => {
 
             {settings.monthlyBudget > 0 && (
                 <View style={styles.budgetContainer}>
-                    <BudgetProgress
-                        label={t('monthlyBudget', lang)}
-                        current={expense}
-                        target={settings.monthlyBudget}
-                        color={colors.primary}
-                        currency={currency}
-                        lang={lang}
-                    />
-                </View>
-            )}
-
-            {safeToSpend && (
-                <View style={styles.budgetContainer}>
-                    <View style={[styles.safeCard, { backgroundColor: colors.card, flexDirection: getFlexDirection(lang) }]}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={[styles.safeLabel, { color: colors.textSecondary, fontSize: 12 * fs }, rtl && { textAlign: 'right' }]}>
-                                {lang === 'ar' ? '💸 المتاح للصرف اليوم' : '💸 Safe to spend today'}
-                            </Text>
-                            <Text style={[styles.safeValue, { color: safeToSpend.over ? colors.danger : colors.success, fontSize: 22 * fs }, rtl && { textAlign: 'right' }]}>
-                                {safeToSpend.over
-                                    ? (lang === 'ar' ? 'تجاوزت الميزانية' : 'Over budget')
-                                    : formatCurrency(safeToSpend.perDay, currency, lang)}
-                            </Text>
-                        </View>
-                        <Text style={[styles.safeDays, { color: colors.textSecondary, fontSize: 11 * fs }]}>
-                            {safeToSpend.daysLeft} {lang === 'ar' ? 'يوم متبقٍ' : 'days left'}
+                    <TouchableOpacity style={[styles.budgetToggle, { flexDirection: getFlexDirection(lang) }]} onPress={() => setBudgetOpen((o) => !o)} activeOpacity={0.7}>
+                        <Text style={[styles.budgetToggleLabel, { color: colors.textSecondary, fontSize: 12 * fs }]}>
+                            {lang === 'ar' ? 'الميزانية' : 'BUDGET'}
                         </Text>
-                    </View>
+                        {!budgetOpen && safeToSpend && !safeToSpend.over && (
+                            <Text style={[styles.budgetTogglePeek, { color: colors.success, fontSize: 12 * fs }]} numberOfLines={1}>
+                                {formatCurrency(safeToSpend.perDay, currency, lang)}{lang === 'ar' ? ' / يوم' : ' /day'}
+                            </Text>
+                        )}
+                        <Ionicons name={budgetOpen ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                    {budgetOpen && (
+                        <>
+                            <BudgetProgress
+                                label={t('monthlyBudget', lang)}
+                                current={expense}
+                                target={settings.monthlyBudget}
+                                color={colors.primary}
+                                currency={currency}
+                                lang={lang}
+                            />
+                            {safeToSpend && (
+                                <View style={[styles.safeCard, { backgroundColor: colors.card, flexDirection: getFlexDirection(lang) }]}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[styles.safeLabel, { color: colors.textSecondary, fontSize: 12 * fs }, rtl && { textAlign: 'right' }]}>
+                                            {lang === 'ar' ? 'المتاح للصرف اليوم' : 'Safe to spend today'}
+                                        </Text>
+                                        <Text style={[styles.safeValue, { color: safeToSpend.over ? colors.danger : colors.success, fontSize: 22 * fs }, rtl && { textAlign: 'right' }]}>
+                                            {safeToSpend.over
+                                                ? (lang === 'ar' ? 'تجاوزت الميزانية' : 'Over budget')
+                                                : formatCurrency(safeToSpend.perDay, currency, lang)}
+                                        </Text>
+                                    </View>
+                                    <Text style={[styles.safeDays, { color: colors.textSecondary, fontSize: 11 * fs }]}>
+                                        {safeToSpend.daysLeft} {lang === 'ar' ? 'يوم متبقٍ' : 'days left'}
+                                    </Text>
+                                </View>
+                            )}
+                        </>
+                    )}
                 </View>
             )}
 
@@ -300,7 +314,7 @@ const HomeScreen = ({ navigation }: any) => {
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyEmoji}>📭</Text>
+                            <Ionicons name="receipt-outline" size={48} color={colors.textSecondary} style={{ marginBottom: Layout.spacing.md }} />
                             <Text style={[styles.emptyText, { color: colors.text }]}>{t('noTransactions', lang)}</Text>
                             <Text style={[styles.emptySubText, { color: colors.textSecondary }]}>{t('tapToAdd', lang)}</Text>
                         </View>
@@ -403,6 +417,9 @@ const styles = StyleSheet.create({
     toggleText: { fontFamily: Fonts.semiBold, fontSize: 12 },
     summaryContainer: { paddingHorizontal: Layout.spacing.lg, marginBottom: Layout.spacing.md },
     budgetContainer: { paddingHorizontal: Layout.spacing.lg, marginBottom: Layout.spacing.md },
+    budgetToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, gap: 8 },
+    budgetToggleLabel: { fontFamily: Fonts.semiBold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' },
+    budgetTogglePeek: { fontFamily: Fonts.bold, fontSize: 12, flex: 1, textAlign: 'center' },
     safeCard: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         borderRadius: Layout.borderRadius.md, padding: Layout.spacing.md,

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Layout, Fonts } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useApp } from '../../context/AppContext';
@@ -17,10 +17,9 @@ interface Props {
 const SummaryCard = ({ income, expense, currency, lang = 'en' }: Props) => {
     const { state } = useApp();
     const { colors } = useTheme();
-    const [isVisible, setIsVisible] = useState(true);
     const balance = income - expense;
     const isAr = lang === 'ar';
-    const hidden = !isVisible || !!state.settings.privacyMode;
+    const hidden = !!state.settings.privacyMode;
 
     return (
         <View style={styles.container}>
@@ -53,31 +52,9 @@ const SummaryCard = ({ income, expense, currency, lang = 'en' }: Props) => {
 
             {/* Content Overlay */}
             <View style={styles.content}>
-                {/* Top row: Label and Eye Toggle */}
+                {/* Top row: Label */}
                 <View style={[styles.header, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
                     <Text style={[styles.label, { fontSize: 17 * (state.settings.fontScale || 1) }]}>{t('balance', lang)}</Text>
-                    <TouchableOpacity onPress={() => setIsVisible(!isVisible)} style={styles.eyeBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-                            {isVisible ? (
-                                <Path
-                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                                    stroke="rgba(255,255,255,0.9)"
-                                    strokeWidth={2}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            ) : (
-                                <Path
-                                    d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 011.24-2.33M1 1l22 22M6.73 6.73A10.08 10.08 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M10.94 10.94a3 3 0 114.12 4.12"
-                                    stroke="rgba(255,255,255,0.9)"
-                                    strokeWidth={2}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            )}
-                            {isVisible && <Circle cx="12" cy="12" r="3" stroke="rgba(255,255,255,0.9)" strokeWidth={2} />}
-                        </Svg>
-                    </TouchableOpacity>
                 </View>
 
                 {/* Middle: Large Balance */}

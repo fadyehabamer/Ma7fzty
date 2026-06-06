@@ -4,13 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { Layout, Fonts } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const slides = [
-    { emoji: '💰', title: 'Track Your Expenses', titleAr: 'تتبع مصروفاتك', desc: 'Keep a detailed record of every transaction to understand where your money goes.', descAr: 'سجل كل معاملاتك المالية لمعرفة أين تذهب أموالك.' },
-    { emoji: '📊', title: 'Visualize & Analyze', titleAr: 'حلل وتابع', desc: 'Beautiful charts and insights to help you make smarter financial decisions.', descAr: 'رسومات بيانية وتحليلات لمساعدتك على اتخاذ قرارات مالية أذكى.' },
-    { emoji: '🎯', title: 'Set Budgets & Goals', titleAr: 'حدد ميزانيتك', desc: 'Set monthly budgets and track your progress towards financial goals.', descAr: 'حدد ميزانيات شهرية وتابع تقدمك نحو أهدافك المالية.' },
+    { emoji: 'cash', title: 'Track Your Expenses', titleAr: 'تتبع مصروفاتك', desc: 'Keep a detailed record of every transaction to understand where your money goes.', descAr: 'سجل كل معاملاتك المالية لمعرفة أين تذهب أموالك.' },
+    { emoji: 'bar-chart', title: 'Visualize & Analyze', titleAr: 'حلل وتابع', desc: 'Beautiful charts and insights to help you make smarter financial decisions.', descAr: 'رسومات بيانية وتحليلات لمساعدتك على اتخاذ قرارات مالية أذكى.' },
+    { emoji: 'flag', title: 'Set Budgets & Goals', titleAr: 'حدد ميزانيتك', desc: 'Set monthly budgets and track your progress towards financial goals.', descAr: 'حدد ميزانيات شهرية وتابع تقدمك نحو أهدافك المالية.' },
 ];
 
 const OnboardingScreen = ({ navigation }: any) => {
@@ -66,7 +67,7 @@ const OnboardingScreen = ({ navigation }: any) => {
                 renderItem={({ item }) => (
                     <View style={[styles.slide, { width: SCREEN_WIDTH }]}>
                         <View style={[styles.emojiCircle, { backgroundColor: colors.primary + '12' }]}>
-                            <Text style={styles.slideEmoji}>{item.emoji}</Text>
+                            <Ionicons name={item.emoji as any} size={56} color={colors.primary} />
                         </View>
                         <Text style={[styles.slideTitle, { color: colors.text }]}>
                             {isAr ? item.titleAr : item.title}

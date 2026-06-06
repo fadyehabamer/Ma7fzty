@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Layout, Fonts, PRIMARY_COLORS } from '../constants/theme';
 import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { useApp } from '../context/AppContext';
 import { clearAllData } from '../utils/storage';
@@ -41,6 +42,8 @@ const SettingsScreen = () => {
     const [passcodeInput, setPasscodeInput] = useState('');
     const [isDevSectionOpen, setIsDevSectionOpen] = useState(false);
     const [showTimePicker, setShowTimePicker] = useState(false);
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>({ appearance: true });
+    const toggleSection = (id: string) => setOpenSections((p) => ({ ...p, [id]: !p[id] }));
 
     const scheduleDailyReminder = async (time: string) => {
         try {
@@ -49,7 +52,7 @@ const SettingsScreen = () => {
             
             await Notifications.scheduleNotificationAsync({
                 content: {
-                    title: lang === 'ar' ? 'وقت تسجيل المصروفات! 💸' : 'Time to log expenses! 💸',
+                    title: lang === 'ar' ? 'وقت تسجيل المصروفات!' : 'Time to log expenses!',
                     body: lang === 'ar' ? 'لا تنس تسجيل مصروفاتك أو دخلك لليوم.' : 'Don\'t forget to log your daily income and expenses.',
                     sound: true,
                     // Android settings
@@ -353,16 +356,15 @@ const SettingsScreen = () => {
                     </View>
                 </View>
 
-                {/* Appearance */}
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>
-                    {lang === 'ar' ? 'المظهر' : 'APPEARANCE'}
-                </Text>
+                <CollapsibleSection title={lang === 'ar' ? 'المظهر' : 'APPEARANCE'} open={!!openSections['appearance']} onToggle={() => toggleSection('appearance')} colors={colors} fontScale={fontScale} rtl={rtl} lang={lang}>
                 <View style={[styles.section, { backgroundColor: colors.card }]}>
-                    <SettingsRow icon="🌙" label={lang === 'ar' ? 'الوضع الداكن' : 'Dark Mode'} value={isDark ? 'ON' : 'OFF'} onPress={handleToggleDarkMode} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="moon" iconColor="#6366F1" label={lang === 'ar' ? 'الوضع الداكن' : 'Dark Mode'} value={isDark ? 'ON' : 'OFF'} onPress={handleToggleDarkMode} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
                     {/* Font Scale */}
                     <View style={[styles.row, { flexDirection: rtl ? 'row-reverse' : 'row' }]}>
-                        <Text style={[styles.rowIcon, { fontSize: 20 * fontScale }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>🔍</Text>
+                        <View style={[styles.rowIconBadge, { backgroundColor: '#0EA5E9' }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>
+                            <Ionicons name="text" size={17 * fontScale} color="#FFFFFF" />
+                        </View>
                         <View style={{ flex: 1 }}>
                             <Text style={[styles.rowLabel, { color: colors.text, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>
                                 {lang === 'ar' ? 'حجم الخط' : 'Font Size (Zoom)'}
@@ -395,7 +397,9 @@ const SettingsScreen = () => {
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
                     {/* Primary Color */}
                     <View style={[styles.row, { flexDirection: rtl ? 'row-reverse' : 'row' }]}>
-                        <Text style={[styles.rowIcon, { fontSize: 20 * fontScale }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>🎨</Text>
+                        <View style={[styles.rowIconBadge, { backgroundColor: '#EC4899' }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>
+                            <Ionicons name="color-palette" size={17 * fontScale} color="#FFFFFF" />
+                        </View>
                         <View style={{ flex: 1 }}>
                             <Text style={[styles.rowLabel, { color: colors.text, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>
                                 {lang === 'ar' ? 'اللون الرئيسي' : 'Primary Color'}
@@ -420,14 +424,14 @@ const SettingsScreen = () => {
                         </View>
                     </View>
                 </View>
+                </CollapsibleSection>
 
-                {/* Security */}
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>
-                    {isAr ? '\u0627\u0644\u0623\u0645\u0627\u0646' : 'SECURITY'}
-                </Text>
+                <CollapsibleSection title={isAr ? '\u0627\u0644\u0623\u0645\u0627\u0646' : 'SECURITY'} open={!!openSections['security']} onToggle={() => toggleSection('security')} colors={colors} fontScale={fontScale} rtl={rtl} lang={lang}>
                 <View style={[styles.section, { backgroundColor: colors.card }]}>
                     <View style={[styles.row, { flexDirection: rtl ? 'row-reverse' : 'row' }]}>
-                        <Text style={[styles.rowIcon, { fontSize: 20 * fontScale }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>{'🔒'}</Text>
+                        <View style={[styles.rowIconBadge, { backgroundColor: '#3B82F6' }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>
+                            <Ionicons name="lock-closed" size={17 * fontScale} color="#FFFFFF" />
+                        </View>
                         <View style={{ flex: 1 }}>
                             <Text style={[styles.rowLabel, { color: colors.text, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>
                                 {isAr ? '\u0631\u0645\u0632 \u0627\u0644\u0645\u0631\u0648\u0631' : 'Passcode Lock'}
@@ -447,7 +451,7 @@ const SettingsScreen = () => {
                         <>
                             <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
                             <SettingsRow
-                                icon="🔑"
+                                icon="key" iconColor="#F59E0B"
                                 label={isAr ? '\u062a\u063a\u064a\u064a\u0631 \u0631\u0645\u0632 \u0627\u0644\u0645\u0631\u0648\u0631' : 'Change Passcode'}
                                 value=""
                                 onPress={() => { setPasscodeStep('enter'); setNewPasscode(''); setPasscodeInput(''); setShowPasscodeModal(true); }}
@@ -455,7 +459,9 @@ const SettingsScreen = () => {
                             />
                             <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
                             <View style={[styles.row, { flexDirection: rtl ? 'row-reverse' : 'row' }]}>
-                                <Text style={[styles.rowIcon, { fontSize: 20 * fontScale }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>{'🫆'}</Text>
+                                <View style={[styles.rowIconBadge, { backgroundColor: '#10B981' }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>
+                                    <Ionicons name="finger-print" size={17 * fontScale} color="#FFFFFF" />
+                                </View>
                                 <View style={{ flex: 1 }}>
                                     <Text style={[styles.rowLabel, { color: colors.text, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>
                                         {isAr ? 'فتح بالبصمة / الوجه' : 'Biometric Unlock'}
@@ -474,14 +480,14 @@ const SettingsScreen = () => {
                         </>
                     )}
                 </View>
+                </CollapsibleSection>
 
-                {/* Notifications */}
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>
-                    {isAr ? 'الإشعارات' : 'NOTIFICATIONS'}
-                </Text>
+                <CollapsibleSection title={isAr ? 'الإشعارات' : 'NOTIFICATIONS'} open={!!openSections['notifications']} onToggle={() => toggleSection('notifications')} colors={colors} fontScale={fontScale} rtl={rtl} lang={lang}>
                 <View style={[styles.section, { backgroundColor: colors.card }]}>
                     <View style={[styles.row, { flexDirection: rtl ? 'row-reverse' : 'row' }]}>
-                        <Text style={[styles.rowIcon, { fontSize: 20 * fontScale }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>{'🔔'}</Text>
+                        <View style={[styles.rowIconBadge, { backgroundColor: '#EF4444' }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>
+                            <Ionicons name="notifications" size={17 * fontScale} color="#FFFFFF" />
+                        </View>
                         <View style={{ flex: 1 }}>
                             <Text style={[styles.rowLabel, { color: colors.text, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>
                                 {isAr ? 'تذكير يومي' : 'Daily Reminder'}
@@ -496,51 +502,45 @@ const SettingsScreen = () => {
                     </View>
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
                     <SettingsRow 
-                        icon="⏰" 
+                        icon="time" iconColor="#F59E0B" 
                         label={isAr ? 'وقت التذكير' : 'Reminder Time'} 
                         value={dayjs().hour(Number((state.settings.dailyReminderTime || '20:00').split(':')[0])).minute(Number((state.settings.dailyReminderTime || '20:00').split(':')[1])).format('h:mm A')}
                         onPress={() => setShowTimePicker(true)} 
                         rtl={rtl} colors={colors} fontScale={fontScale} 
                     />
                 </View>
+                </CollapsibleSection>
 
-                {/* General */}
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>
-                    {t('general', lang)}
-                </Text>
+                <CollapsibleSection title={t('general', lang)} open={!!openSections['general']} onToggle={() => toggleSection('general')} colors={colors} fontScale={fontScale} rtl={rtl} lang={lang}>
                 <View style={[styles.section, { backgroundColor: colors.card }]}>
-                    <SettingsRow icon="💰" label={t('currency', lang)} value={`${state.settings.currency?.code} (${state.settings.currency?.symbol})`} onPress={handleChangeCurrency} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="cash" iconColor="#10B981" label={t('currency', lang)} value={`${state.settings.currency?.code} (${state.settings.currency?.symbol})`} onPress={handleChangeCurrency} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
                     <SettingsRow
-                        icon="🎯" label={t('monthlyBudget', lang)}
+                        icon="wallet" iconColor="#14B8A6" label={t('monthlyBudget', lang)}
                         value={state.settings.monthlyBudget > 0 ? `${state.settings.currency?.symbol}${state.settings.monthlyBudget.toLocaleString()}` : t('notSet', lang)}
                         onPress={() => { setBudgetInput(state.settings.monthlyBudget > 0 ? state.settings.monthlyBudget.toString() : ''); setShowBudgetModal(true); }}
                         rtl={rtl} colors={colors} fontScale={fontScale}
                     />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
-                    <SettingsRow icon="🌐" label={t('language', lang)} value={lang === 'en' ? 'English' : 'عربي'} onPress={handleToggleLanguage} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="globe" iconColor="#3B82F6" label={t('language', lang)} value={lang === 'en' ? 'English' : 'عربي'} onPress={handleToggleLanguage} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
-                    <SettingsRow icon="📂" label={t('manageCategories', lang)} value={`${state.categories.length}`} onPress={() => (navigation as any).navigate('Categories')} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="grid" iconColor="#8B5CF6" label={t('manageCategories', lang)} value={`${state.categories.length}`} onPress={() => (navigation as any).navigate('Categories')} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
-                    <SettingsRow icon="💳" label={lang === 'ar' ? 'معلومات الدفع' : 'Payment Info'} value={`${(state.paymentMethods || []).length}`} onPress={() => (navigation as any).navigate('PaymentMethods')} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="card" iconColor="#6366F1" label={lang === 'ar' ? 'معلومات الدفع' : 'Payment Info'} value={`${(state.paymentMethods || []).length}`} onPress={() => (navigation as any).navigate('PaymentMethods')} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
-                    <SettingsRow icon="🎯" label={lang === 'ar' ? 'أهداف الادخار' : 'Savings Goals'} value={`${(state.savingsGoals || []).length}`} onPress={() => (navigation as any).navigate('SavingsGoals')} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="flag" iconColor="#F97316" label={lang === 'ar' ? 'أهداف الادخار' : 'Savings Goals'} value={`${(state.savingsGoals || []).length}`} onPress={() => (navigation as any).navigate('SavingsGoals')} rtl={rtl} colors={colors} fontScale={fontScale} />
                 </View>
+                </CollapsibleSection>
 
-                {/* Export */}
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>
-                    {t('exportData', lang)}
-                </Text>
+                <CollapsibleSection title={t('exportData', lang)} open={!!openSections['export']} onToggle={() => toggleSection('export')} colors={colors} fontScale={fontScale} rtl={rtl} lang={lang}>
                 <View style={[styles.section, { backgroundColor: colors.card }]}>
-                    <SettingsRow icon="📄" label={t('exportPdf', lang)} value="PDF" onPress={handleExportPdf} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="document-text" iconColor="#EF4444" label={t('exportPdf', lang)} value="PDF" onPress={handleExportPdf} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
-                    <SettingsRow icon="📊" label={t('exportCsv', lang)} value="CSV" onPress={handleExportCsv} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="bar-chart" iconColor="#10B981" label={t('exportCsv', lang)} value="CSV" onPress={handleExportCsv} rtl={rtl} colors={colors} fontScale={fontScale} />
                 </View>
+                </CollapsibleSection>
 
-                {/* Lifetime Stats */}
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>
-                    {t('lifetimeStats', lang)}
-                </Text>
+                <CollapsibleSection title={t('lifetimeStats', lang)} open={!!openSections['stats']} onToggle={() => toggleSection('stats')} colors={colors} fontScale={fontScale} rtl={rtl} lang={lang}>
                 <View style={[styles.section, { backgroundColor: colors.card }]}>
                     <View style={[styles.statsDataRow, { flexDirection: getFlexDirection(lang) }]}>
                         <Text style={[styles.statsLabel, { color: colors.text, fontSize: 16 * fontScale }]}>{t('totalIncome', lang)}</Text>
@@ -563,30 +563,29 @@ const SettingsScreen = () => {
                         </Text>
                     </View>
                 </View>
+                </CollapsibleSection>
 
-                {/* Backup & Restore */}
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>
-                    {lang === 'ar' ? 'النسخ الاحتياطي' : 'BACKUP & RESTORE'}
-                </Text>
+                <CollapsibleSection title={lang === 'ar' ? 'النسخ الاحتياطي' : 'BACKUP & RESTORE'} open={!!openSections['backup']} onToggle={() => toggleSection('backup')} colors={colors} fontScale={fontScale} rtl={rtl} lang={lang}>
                 <View style={[styles.section, { backgroundColor: colors.card }]}>
-                    <SettingsRow icon="☁️" label={lang === 'ar' ? 'تصدير نسخة احتياطية' : 'Export Backup (JSON)'} value="" onPress={handleExportBackup} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="cloud-upload" iconColor="#3B82F6" label={lang === 'ar' ? 'تصدير نسخة احتياطية' : 'Export Backup (JSON)'} value="" onPress={handleExportBackup} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
-                    <SettingsRow icon="📥" label={lang === 'ar' ? 'استيراد نسخة احتياطية' : 'Import Backup (JSON)'} value="" onPress={handleImportBackup} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <SettingsRow icon="cloud-download" iconColor="#14B8A6" label={lang === 'ar' ? 'استيراد نسخة احتياطية' : 'Import Backup (JSON)'} value="" onPress={handleImportBackup} rtl={rtl} colors={colors} fontScale={fontScale} />
                 </View>
+                </CollapsibleSection>
 
-                {/* Danger Zone */}
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>
-                    {t('data', lang)}
-                </Text>
+                <CollapsibleSection title={t('data', lang)} open={!!openSections['data']} onToggle={() => toggleSection('data')} colors={colors} fontScale={fontScale} rtl={rtl} lang={lang}>
                 <View style={[styles.section, { backgroundColor: colors.card }]}>
                     <TouchableOpacity style={[styles.dangerRow, { flexDirection: getFlexDirection(lang) }]} onPress={handleReset}>
-                        <Text style={[styles.dangerIcon, { fontSize: 20 * fontScale }, rtl && { marginRight: 0, marginLeft: Layout.spacing.md }]}>⚠️</Text>
+                        <View style={[styles.rowIconBadge, { backgroundColor: colors.danger }, rtl && { marginRight: 0, marginLeft: Layout.spacing.md }]}>
+                            <Ionicons name="warning" size={17 * fontScale} color="#FFFFFF" />
+                        </View>
                         <View style={{ flex: 1 }}>
                             <Text style={[styles.dangerText, { color: colors.danger, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>{t('resetAllData', lang)}</Text>
                             <Text style={[styles.dangerSubText, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>{t('deleteAllTransactions', lang)}</Text>
                         </View>
                     </TouchableOpacity>
                 </View>
+                </CollapsibleSection>
 
                 {/* About Developer Section */}
                 <View style={[styles.section, { backgroundColor: colors.card, marginBottom: isDevSectionOpen ? 0 : Layout.spacing.md, borderBottomLeftRadius: isDevSectionOpen ? 0 : Layout.borderRadius.md, borderBottomRightRadius: isDevSectionOpen ? 0 : Layout.borderRadius.md }]}>
@@ -595,7 +594,9 @@ const SettingsScreen = () => {
                         activeOpacity={0.7}
                         style={[styles.row, { flexDirection: getFlexDirection(lang) }]}
                     >
-                        <Text style={[styles.rowIcon, { fontSize: 20 * fontScale }]}>👨‍💻</Text>
+                        <View style={[styles.rowIconBadge, { backgroundColor: '#64748B' }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>
+                            <Ionicons name="code-slash" size={17 * fontScale} color="#FFFFFF" />
+                        </View>
                         <Text style={[styles.rowLabel, { color: colors.text, fontSize: 16 * fontScale, flex: 1 }, rtl && { textAlign: 'right' }]}>
                             {lang === 'ar' ? 'عن المطور' : 'About Developer'}
                         </Text>
@@ -614,34 +615,36 @@ const SettingsScreen = () => {
                         borderTopColor: colors.border
                     }]}>
                         <View style={{ alignItems: 'center', marginBottom: Layout.spacing.md }}>
-                            <View style={[styles.avatarContainer, { backgroundColor: colors.primary + '15' }]}>
+                            <View style={[styles.avatarContainer, { backgroundColor: colors.primary + '15', borderWidth: 3, borderColor: colors.primary + '40' }]}>
                                 <Image source={require('../../assets/fady.png')} style={styles.devAvatar} />
                             </View>
                             <Text style={[styles.devName, { color: colors.text, fontSize: 20 * fontScale }]}>Fady Ehab Amer</Text>
-                            <Text style={[styles.devRole, { color: colors.primary, fontSize: 14 * fontScale }]}>Software Engineer</Text>
+                            <Text style={[styles.devRole, { color: colors.primary, fontSize: 13 * fontScale, backgroundColor: colors.primary + '15', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, overflow: 'hidden' }]}>Software Engineer</Text>
                         </View>
-                        <Text style={[styles.devBio, { color: colors.textSecondary, fontSize: 14 * fontScale, textAlign: isAr ? 'right' : 'left' }]}>
+                        <View style={[styles.devBioBox, { backgroundColor: colors.background }]}>
+                        <Text style={[styles.devBio, { color: colors.textSecondary, fontSize: 14 * fontScale, marginBottom: 0, textAlign: isAr ? 'right' : 'left' }]}>
                             {lang === 'ar'
                                 ? 'مهندس برمجيات، شغوف لعلوم الحاسوب، ومحب للقطط. متخصص في بناء حلول ويب وسهلة الاستخدام مع التركيز على تطوير الواجهات الأمامية والأنظمة الخلفية. أنا متحمس لتقديم تجارب رقمية عالية الجودة تلبي احتياجاتك الفريدة.'
                                 : 'Software Engineer, CS geek, and proud cat dad. I specialize in building modern, user-friendly solutions with a focus on both frontend and backend development. I’m passionate about delivering high-quality digital experiences that meet your unique needs.'}
                         </Text>
+                        </View>
                         <View style={[styles.devLinks, { flexDirection: getFlexDirection(lang) }]}>
                             {/* Website */}
-                            <TouchableOpacity onPress={() => Linking.openURL('https://fadyehabamer.com')} style={styles.devLinkBtn}>
+                            <TouchableOpacity onPress={() => Linking.openURL('https://fadyehabamer.com')} style={[styles.devLinkBtn, { backgroundColor: colors.primary }]}>
                                 <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                    <Path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8z" fill={colors.primary} />
-                                    <Path d="M12 6a6 6 0 106 6 6 6 0 00-6-6zm0 10a4 4 0 114-4 4 4 0 01-4 4z" fill={colors.primary} />
+                                    <Path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8z" fill="#FFFFFF" />
+                                    <Path d="M12 6a6 6 0 106 6 6 6 0 00-6-6zm0 10a4 4 0 114-4 4 4 0 01-4 4z" fill="#FFFFFF" />
                                 </Svg>
                             </TouchableOpacity>
                             {/* GitHub */}
-                            <TouchableOpacity onPress={() => Linking.openURL('https://github.com/fadyehabamer')} style={styles.devLinkBtn}>
-                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="currentColor">
+                            <TouchableOpacity onPress={() => Linking.openURL('https://github.com/fadyehabamer')} style={[styles.devLinkBtn, { backgroundColor: '#181717' }]}>
+                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="#FFFFFF">
                                     <Path d="M12 2A10 10 0 008.84 21.5c.5.08.66-.23.66-.5V19.3c-2.78.6-3.37-1.34-3.37-1.34-.45-1.15-1.11-1.46-1.11-1.46-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.08.39-1.97 1.03-2.67-.1-.26-.45-1.27.1-2.64 0 0 .83-.27 2.72 1.02a9.45 9.45 0 015 0c1.89-1.3 2.72-1.02 2.72-1.02.55 1.37.2 2.38.1 2.64.64.7 1.03 1.59 1.03 2.67 0 3.82-2.33 4.66-4.56 4.91.36.31.68.92.68 1.85v2.74c0 .27.16.59.67.5A10 10 0 0012 2z" />
                                 </Svg>
                             </TouchableOpacity>
                             {/* LinkedIn */}
-                            <TouchableOpacity onPress={() => Linking.openURL('https://linkedin.com/in/fadyehabamer')} style={styles.devLinkBtn}>
-                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="#0077B5">
+                            <TouchableOpacity onPress={() => Linking.openURL('https://linkedin.com/in/fadyehabamer')} style={[styles.devLinkBtn, { backgroundColor: '#0077B5' }]}>
+                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="#FFFFFF">
                                     <Path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a2.7 2.7 0 0 0-2.7-2.7c-1.2 0-1.8.7-2.1 1.2v-1h-2.5v7.8h2.5v-4.2c0-.2 0-.4.1-.6a1.3 1.3 0 0 1 1.2-1c.8 0 1.1.6 1.1 1.6v4.2h2.4M8.1 7.3c-.9 0-1.5.6-1.5 1.3s.6 1.3 1.5 1.3 1.5-.6 1.5-1.3-.6-1.3-1.5-1.3m1.2 11.2V10.7H6.9v7.8h2.4z" />
                                 </Svg>
                             </TouchableOpacity>
@@ -654,7 +657,13 @@ const SettingsScreen = () => {
                     </View>
                 )}
 
-                <Text style={[styles.version, { color: colors.textSecondary }]}>Mahfazty v1.0.0</Text>
+                <View style={styles.appFooter}>
+                    <View style={[styles.appLogoWrap, { backgroundColor: colors.primary + '15' }]}>
+                        <Image source={require('../../assets/icon.png')} style={styles.appLogo} />
+                    </View>
+                    <Text style={[styles.appName, { color: colors.text }]}>Ma7fzty</Text>
+                    <Text style={[styles.version, { color: colors.textSecondary }]}>{lang === 'ar' ? 'الإصدار 1.0.0' : 'Version 1.0.0'}</Text>
+                </View>
             </ScrollView>
 
             {/* Budget Modal */}
@@ -784,11 +793,21 @@ const SettingsScreen = () => {
     );
 };
 
-const SettingsRow = ({ icon, label, value, onPress, rtl = false, colors, fontScale = 1 }: {
-    icon: string; label: string; value: string; onPress: () => void; rtl?: boolean; colors: any; fontScale?: number;
+// Plain section wrapper (collapsible behaviour reverted — always shown).
+const CollapsibleSection = ({ title, colors, fontScale = 1, rtl = false, children }: any) => (
+    <View>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>{title}</Text>
+        {children}
+    </View>
+);
+
+const SettingsRow = ({ icon, iconColor, label, value, onPress, rtl = false, colors, fontScale = 1 }: {
+    icon: string; iconColor?: string; label: string; value: string; onPress: () => void; rtl?: boolean; colors: any; fontScale?: number;
 }) => (
     <TouchableOpacity style={[styles.row, { flexDirection: rtl ? 'row-reverse' : 'row' }]} onPress={onPress} activeOpacity={0.6}>
-        <Text style={[styles.rowIcon, { fontSize: 20 * fontScale }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>{icon}</Text>
+        <View style={[styles.rowIconBadge, { backgroundColor: iconColor || colors.primary }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>
+            <Ionicons name={icon as any} size={17 * fontScale} color="#FFFFFF" />
+        </View>
         <View style={{ flex: 1 }}>
             <Text style={[styles.rowLabel, { color: colors.text, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>{label}</Text>
         </View>
@@ -801,7 +820,7 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     header: { paddingHorizontal: Layout.spacing.lg, paddingTop: Layout.spacing.md, paddingBottom: Layout.spacing.md },
     headerTitle: { fontFamily: Fonts.bold, fontSize: 24 },
-    scrollContent: { paddingBottom: 80 },
+    scrollContent: { paddingBottom: 120 },
     statsCard: {
         marginHorizontal: Layout.spacing.md, marginBottom: Layout.spacing.lg,
         borderRadius: Layout.borderRadius.md, padding: Layout.spacing.lg,
@@ -812,6 +831,7 @@ const styles = StyleSheet.create({
     statLabel: { fontFamily: Fonts.medium, fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
     statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.2)' },
     sectionTitle: { fontFamily: Fonts.semiBold, fontSize: 12, paddingHorizontal: Layout.spacing.lg, marginBottom: Layout.spacing.sm, marginTop: Layout.spacing.sm, letterSpacing: 1 },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Layout.spacing.lg, paddingVertical: 10, marginTop: Layout.spacing.xs },
     section: {
         marginHorizontal: Layout.spacing.md, marginBottom: Layout.spacing.md,
         borderRadius: Layout.borderRadius.md,
@@ -819,6 +839,7 @@ const styles = StyleSheet.create({
     },
     row: { flexDirection: 'row', alignItems: 'center', padding: Layout.spacing.md },
     rowIcon: { fontSize: 20, marginRight: Layout.spacing.md },
+    rowIconBadge: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginRight: Layout.spacing.md },
     rowLabel: { fontFamily: Fonts.medium, fontSize: 16 },
     rowValue: { fontFamily: Fonts.regular, fontSize: 14, marginRight: 4 },
     rowChevron: { fontSize: 20 },
@@ -834,7 +855,11 @@ const styles = StyleSheet.create({
     dangerIcon: { fontSize: 20, marginRight: Layout.spacing.md },
     dangerText: { fontFamily: Fonts.semiBold, fontSize: 16 },
     dangerSubText: { fontFamily: Fonts.regular, fontSize: 12, marginTop: 2 },
-    version: { fontFamily: Fonts.regular, textAlign: 'center', fontSize: 12, marginTop: Layout.spacing.lg },
+    version: { fontFamily: Fonts.regular, textAlign: 'center', fontSize: 12 },
+    appFooter: { alignItems: 'center', marginTop: Layout.spacing.xl, marginBottom: Layout.spacing.md },
+    appLogoWrap: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: Layout.spacing.sm, overflow: 'hidden' },
+    appLogo: { width: 56, height: 56, resizeMode: 'contain' },
+    appName: { fontFamily: Fonts.bold, fontSize: 16, marginBottom: 2 },
     modalOverlay: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: Layout.spacing.lg },
     modalContent: { borderRadius: Layout.borderRadius.lg, padding: Layout.spacing.lg },
     modalTitle: { fontFamily: Fonts.bold, fontSize: 20, textAlign: 'center', marginBottom: 4 },
@@ -868,13 +893,14 @@ const styles = StyleSheet.create({
     fontScaleBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center', padding: 0 },
     fontScaleBtnText: { fontSize: 20, fontFamily: Fonts.bold, lineHeight: 22, textAlign: 'center', textAlignVertical: 'center' },
     fontScaleValue: { fontSize: 16, fontFamily: Fonts.bold, minWidth: 45, textAlign: 'center' },
-    avatarContainer: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: Layout.spacing.sm, overflow: 'hidden' },
+    avatarContainer: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center', marginBottom: Layout.spacing.sm, overflow: 'hidden' },
     devAvatar: { width: '100%', height: '100%', resizeMode: 'cover' },
     devName: { fontFamily: Fonts.bold, fontSize: 20, marginBottom: 2 },
     devRole: { fontFamily: Fonts.semiBold, fontSize: 14, marginBottom: Layout.spacing.md },
     devBio: { fontFamily: Fonts.regular, fontSize: 14, lineHeight: 20, marginBottom: Layout.spacing.lg },
+    devBioBox: { borderRadius: Layout.borderRadius.md, padding: Layout.spacing.md, marginBottom: Layout.spacing.lg },
     devLinks: { flexDirection: 'row', justifyContent: 'center', gap: Layout.spacing.md },
-    devLinkBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#F8F9FA', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+    devLinkBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 3 },
     sectionHeaderRow: { paddingHorizontal: Layout.spacing.lg, marginBottom: Layout.spacing.sm, marginTop: Layout.spacing.sm, flexDirection: 'row', alignItems: 'center' },
 });
 

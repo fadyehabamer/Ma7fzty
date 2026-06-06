@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/common/AppIcon';
 import QRCode from 'react-native-qrcode-svg';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -201,7 +203,7 @@ const PaymentMethodsScreen = ({ navigation }: any) => {
 
                     {methods.length === 0 ? (
                         <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-                            <Text style={{ fontSize: 40 }}>💳</Text>
+                            <Ionicons name="card-outline" size={40} color={colors.textSecondary} />
                             <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: 14 * fontScale }]}>
                                 {isAr ? 'لم تتم إضافة أي طريقة دفع بعد' : 'No payment methods yet'}
                             </Text>
@@ -218,7 +220,7 @@ const PaymentMethodsScreen = ({ navigation }: any) => {
                                     activeOpacity={0.7}
                                 >
                                     <View style={[styles.methodBadge, { backgroundColor: def.color + '1A' }]}>
-                                        <Text style={{ fontSize: 22 }}>{def.emoji}</Text>
+                                        <AppIcon name={def.emoji} size={22} color={def.color} />
                                     </View>
                                     <View style={[styles.methodInfo, rtl && { alignItems: 'flex-end' }]}>
                                         <Text style={[styles.methodTitle, { color: colors.text, fontSize: 16 * fontScale }]} numberOfLines={1}>
@@ -273,7 +275,7 @@ const PaymentMethodsScreen = ({ navigation }: any) => {
                                                 activeOpacity={0.7}
                                             >
                                                 <View style={[styles.typeBadge, { backgroundColor: def.color + '1A' }]}>
-                                                    <Text style={{ fontSize: 22 }}>{def.emoji}</Text>
+                                                    <AppIcon name={def.emoji} size={22} color={def.color} />
                                                 </View>
                                                 <Text style={[styles.typeName, { color: colors.text, fontSize: 13 * fontScale }]} numberOfLines={1}>
                                                     {typeLabel(def, lang)}
@@ -290,7 +292,7 @@ const PaymentMethodsScreen = ({ navigation }: any) => {
                                             activeOpacity={editingId ? 1 : 0.7}
                                         >
                                             <View style={[styles.typeBadge, { backgroundColor: (formDef?.color || colors.primary) + '1A', marginBottom: 0 }]}>
-                                                <Text style={{ fontSize: 20 }}>{formDef?.emoji}</Text>
+                                                <AppIcon name={formDef?.emoji} size={20} color={formDef?.color || colors.primary} />
                                             </View>
                                             <Text style={[styles.rowLabel, { color: colors.text, fontSize: 15 * fontScale, flex: 1 }, rtl && { textAlign: 'right' }]}>
                                                 {formDef ? typeLabel(formDef, lang) : ''}
@@ -384,7 +386,7 @@ const PaymentMethodsScreen = ({ navigation }: any) => {
                             return (
                                 <>
                                     <View style={[styles.shareHeaderRow, { backgroundColor: def.color + '1A' }]}>
-                                        <Text style={{ fontSize: 24 }}>{def.emoji}</Text>
+                                        <AppIcon name={def.emoji} size={24} color={def.color} />
                                         <Text style={[styles.shareTitle, { color: colors.text, fontSize: 17 * fontScale }]} numberOfLines={1}>
                                             {methodTitle(shareMethod, lang)}
                                         </Text>

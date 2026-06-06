@@ -12,6 +12,8 @@ import { useTheme } from '../hooks/useTheme';
 import { TransactionType, Transaction } from '../types';
 import { t, isRTL, getFlexDirection } from '../utils/i18n';
 import { evaluateExpression, hasOperator } from '../utils/calc';
+import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/common/AppIcon';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'react-native';
 
@@ -43,6 +45,7 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
     const [type, setType] = useState<TransactionType>(editTx?.type ?? initData?.type ?? 'expense');
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(editTx?.categoryId ?? initData?.categoryId ?? null);
     const [selectorWidth, setSelectorWidth] = useState(0);
+    const [showCalc, setShowCalc] = useState(false);
     const slideAnim = useRef(new Animated.Value(0)).current;
     
     const isFirstRender = useRef(true);
@@ -224,21 +227,30 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                         </View>
                     </View>
 
-                    {/* Calculator row */}
-                    <View style={styles.calcRow}>
-                        {['/', '*', '-', '+'].map((op) => (
-                            <TouchableOpacity key={op} style={[styles.calcBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => appendOperator(op)} activeOpacity={0.7}>
-                                <Text style={[styles.calcBtnText, { color: colors.text, fontSize: 20 * fontScale }]}>{op === '*' ? '×' : op === '/' ? '÷' : op}</Text>
-                            </TouchableOpacity>
-                        ))}
-                        <TouchableOpacity style={[styles.calcBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={applyEquals} activeOpacity={0.7}>
-                            <Text style={[styles.calcBtnText, { color: '#FFF', fontSize: 20 * fontScale }]}>=</Text>
-                        </TouchableOpacity>
-                    </View>
-                    {computed != null && (
-                        <Text style={[styles.calcResult, { color: type === 'expense' ? colors.danger : colors.success, fontSize: 15 * fontScale }]}>
-                            = {Math.abs(computed).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lang === 'ar' ? state.settings.currency?.symbol : state.settings.currency?.code}
-                        </Text>
+                    {/* Calculator (collapsible) */}
+                    <TouchableOpacity style={[styles.calcToggle, { flexDirection: getFlexDirection(lang) }]} onPress={() => setShowCalc((s) => !s)} activeOpacity={0.7}>
+                        <Ionicons name="calculator-outline" size={16} color={colors.primary} />
+                        <Text style={[styles.calcToggleText, { color: colors.primary, fontSize: 13 * fontScale }]}>{lang === 'ar' ? 'آلة حاسبة' : 'Calculator'}</Text>
+                        <Ionicons name={(showCalc || computed != null) ? 'chevron-up' : 'chevron-down'} size={14} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                    {(showCalc || computed != null) && (
+                        <>
+                            <View style={styles.calcRow}>
+                                {['/', '*', '-', '+'].map((op) => (
+                                    <TouchableOpacity key={op} style={[styles.calcBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => appendOperator(op)} activeOpacity={0.7}>
+                                        <Text style={[styles.calcBtnText, { color: colors.text, fontSize: 20 * fontScale }]}>{op === '*' ? '×' : op === '/' ? '÷' : op}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                                <TouchableOpacity style={[styles.calcBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={applyEquals} activeOpacity={0.7}>
+                                    <Text style={[styles.calcBtnText, { color: '#FFF', fontSize: 20 * fontScale }]}>=</Text>
+                                </TouchableOpacity>
+                            </View>
+                            {computed != null && (
+                                <Text style={[styles.calcResult, { color: type === 'expense' ? colors.danger : colors.success, fontSize: 15 * fontScale }]}>
+                                    = {Math.abs(computed).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lang === 'ar' ? state.settings.currency?.symbol : state.settings.currency?.code}
+                                </Text>
+                            )}
+                        </>
                     )}
 
                     {/* Category */}
@@ -260,7 +272,7 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                                     onPress={() => setSelectedCategoryId(cat.id)}
                                     activeOpacity={0.7}
                                 >
-                                    <Text style={[styles.chipEmoji, { fontSize: 18 * fontScale }]}>{cat.emoji}</Text>
+                                    <AppIcon name={cat.emoji} size={18} color={isSelected ? '#FFFFFF' : colors.text} />
                                     <Text style={[styles.chipName, { color: colors.textSecondary, fontSize: 14 * fontScale }, isSelected && { color: '#FFFFFF', fontFamily: Fonts.bold }]} numberOfLines={1}>{cat.name}</Text>
                                 </TouchableOpacity>
                             );
@@ -280,14 +292,14 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                         />
                         <View style={[styles.photoRow, { flexDirection: getFlexDirection(lang) }]}>
                             <TouchableOpacity onPress={pickImage} style={[styles.addPhotoBtn, { borderColor: colors.border }]}>
-                                <Text style={{ fontSize: 20 * fontScale }}>📷</Text>
+                                <Ionicons name="camera-outline" size={20} color={colors.primary} />
                                 <Text style={[styles.addPhotoText, { color: colors.primary, fontSize: 13 * fontScale }]}>{imageUri ? (lang === 'ar' ? 'تغيير' : 'Change') : (lang === 'ar' ? 'صورة' : 'Add Photo')}</Text>
                             </TouchableOpacity>
                             {imageUri && (
                                 <View style={styles.imagePreviewContainer}>
                                     <Image source={{ uri: imageUri }} style={styles.imagePreview} />
                                     <TouchableOpacity style={styles.removeImageBtn} onPress={() => setImageUri(null)}>
-                                        <Text style={{ color: '#FFF', fontSize: 10, fontWeight: 'bold' }}>✕</Text>
+                                        <Ionicons name="close" size={12} color="#FFF" />
                                     </TouchableOpacity>
                                 </View>
                             )}
@@ -399,7 +411,7 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                         </View>
                         <View style={[styles.infoItem, { backgroundColor: colors.card }]}>
                             <Text style={[styles.infoLabel, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>{t('category', lang)}</Text>
-                            <Text style={[styles.infoValue, { color: colors.text, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>{selectedCat ? `${selectedCat.emoji} ${selectedCat.name}` : '—'}</Text>
+                            <Text style={[styles.infoValue, { color: colors.text, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>{selectedCat ? selectedCat.name : '—'}</Text>
                         </View>
                     </View>
                 </ScrollView>
@@ -444,6 +456,8 @@ const styles = StyleSheet.create({
     },
     amountInput: { fontFamily: Fonts.bold, fontSize: 48, minWidth: 120, textAlign: 'center' },
     sectionTitle: { fontFamily: Fonts.semiBold, fontSize: 14, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Layout.spacing.sm, marginTop: Layout.spacing.xs },
+    calcToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 6, marginBottom: Layout.spacing.sm },
+    calcToggleText: { fontFamily: Fonts.semiBold, fontSize: 13 },
     calcRow: { flexDirection: 'row', gap: Layout.spacing.sm, marginBottom: Layout.spacing.sm },
     calcBtn: { flex: 1, height: 44, borderRadius: Layout.borderRadius.sm, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
     calcBtnText: { fontFamily: Fonts.bold, fontSize: 20 },
