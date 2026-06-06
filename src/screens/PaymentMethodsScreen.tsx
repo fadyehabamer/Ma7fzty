@@ -12,6 +12,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../hooks/useTheme';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { Layout, Fonts } from '../constants/theme';
 import { isRTL, getFlexDirection } from '../utils/i18n';
 import { PaymentMethod, PaymentMethodType } from '../types';
@@ -25,6 +26,7 @@ import {
 const PaymentMethodsScreen = ({ navigation }: any) => {
     const { state, dispatch } = useApp();
     const { colors } = useTheme();
+    const keyboardHeight = useKeyboardHeight();
     const lang = state.settings.language || 'en';
     const fontScale = state.settings.fontScale || 1;
     const rtl = isRTL(lang);
@@ -253,7 +255,7 @@ const PaymentMethodsScreen = ({ navigation }: any) => {
 
             {/* ── Add / Edit Modal ─────────────────────── */}
             <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
-                <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+                <View style={{ flex: 1, paddingBottom: keyboardHeight }}>
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
                             <View style={[styles.modalHandleRow]}>
@@ -374,7 +376,7 @@ const PaymentMethodsScreen = ({ navigation }: any) => {
                             </View>
                         </View>
                     </View>
-                </KeyboardAvoidingView>
+                </View>
             </Modal>
 
             {/* ── Share Modal ──────────────────────────── */}

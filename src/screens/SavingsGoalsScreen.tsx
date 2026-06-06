@@ -9,6 +9,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../hooks/useTheme';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { Layout, Fonts } from '../constants/theme';
 import { isRTL, getFlexDirection } from '../utils/i18n';
 import { SavingsGoal } from '../types';
@@ -19,6 +20,7 @@ import { PICKER_ICONS } from '../constants/icons';
 const SavingsGoalsScreen = ({ navigation }: any) => {
     const { state, dispatch } = useApp();
     const { colors } = useTheme();
+    const keyboardHeight = useKeyboardHeight();
     const lang = state.settings.language || 'en';
     const fontScale = state.settings.fontScale || 1;
     const rtl = isRTL(lang);
@@ -206,7 +208,7 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
 
             {/* Goal form modal */}
             <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
-                <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+                <View style={{ flex: 1, paddingBottom: keyboardHeight }}>
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
                             <View style={styles.modalHandleRow}><View style={[styles.modalHandle, { backgroundColor: colors.border }]} /></View>
@@ -292,12 +294,12 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
                             </View>
                         </View>
                     </View>
-                </KeyboardAvoidingView>
+                </View>
             </Modal>
 
             {/* Add money modal */}
             <Modal visible={!!moneyGoal} transparent animationType="fade" onRequestClose={() => setMoneyGoal(null)}>
-                <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+                <View style={{ flex: 1, paddingBottom: keyboardHeight }}>
                     <View style={styles.centerOverlay}>
                         <View style={[styles.moneySheet, { backgroundColor: colors.card }]}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: Layout.spacing.md }}>
@@ -323,7 +325,7 @@ const SavingsGoalsScreen = ({ navigation }: any) => {
                             </TouchableOpacity>
                         </View>
                     </View>
-                </KeyboardAvoidingView>
+                </View>
             </Modal>
         </SafeAreaView>
     );

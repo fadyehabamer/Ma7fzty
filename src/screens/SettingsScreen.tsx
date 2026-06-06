@@ -9,6 +9,7 @@ import { Layout, Fonts, PRIMARY_COLORS } from '../constants/theme';
 import Svg, { Path } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { useApp } from '../context/AppContext';
 import { clearAllData } from '../utils/storage';
 import { t, isRTL, getFlexDirection } from '../utils/i18n';
@@ -27,6 +28,7 @@ import { exportBackup, importBackup } from '../utils/storage';
 const SettingsScreen = () => {
     const { state, dispatch } = useApp();
     const { colors, isDark } = useTheme();
+    const keyboardHeight = useKeyboardHeight();
     const navigation = useNavigation();
     const lang = state.settings.language || 'en';
     const fontScale = state.settings.fontScale || 1;
@@ -668,7 +670,7 @@ const SettingsScreen = () => {
 
             {/* Budget Modal */}
             <Modal visible={showBudgetModal} animationType="slide" transparent>
-                <View style={styles.modalOverlay}>
+                <View style={[styles.modalOverlay, { paddingBottom: keyboardHeight }]}>
                     <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
                         <Text style={[styles.modalTitle, { color: colors.text }]}>
                             {lang === 'ar' ? 'تعيين الميزانية الشهرية' : 'Set Monthly Budget'}

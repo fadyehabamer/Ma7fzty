@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert,
-    KeyboardAvoidingView, Platform, ScrollView,
+    ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { Layout, Fonts } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { TransactionType } from '../types';
 import { t, isRTL, getFlexDirection, getTextAlign } from '../utils/i18n';
 import AppIcon from '../components/common/AppIcon';
@@ -17,6 +18,7 @@ import { PICKER_ICONS } from '../constants/icons';
 const CategoriesScreen = ({ navigation }: any) => {
     const { state, dispatch } = useApp();
     const { colors } = useTheme();
+    const keyboardHeight = useKeyboardHeight();
     const lang = state.settings.language || 'en';
     const rtl = isRTL(lang);
     const [filter, setFilter] = useState<'all' | TransactionType>('all');
@@ -139,7 +141,7 @@ const CategoriesScreen = ({ navigation }: any) => {
 
             {/* Add Modal */}
             <Modal visible={showAdd} transparent animationType="fade">
-                <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+                <View style={{ flex: 1, paddingBottom: keyboardHeight }}>
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
                             <Text style={[styles.modalTitle, { color: colors.text, textAlign: rtl ? 'right' : 'left' }]}>{editingId ? (lang === 'ar' ? 'تعديل الفئة' : 'Edit Category') : t('newCategory', lang)}</Text>
@@ -194,7 +196,7 @@ const CategoriesScreen = ({ navigation }: any) => {
                             )}
                         </View>
                     </View>
-                </KeyboardAvoidingView>
+                </View>
             </Modal>
         </SafeAreaView>
     );
