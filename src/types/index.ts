@@ -45,6 +45,7 @@ export interface AppSettings {
   dailyReminder?: boolean;
   dailyReminderTime?: string; // HH:mm format
   profileName?: string; // Name shown when sharing payment info
+  biometricEnabled?: boolean; // Unlock with Face ID / fingerprint (requires passcode)
 }
 
 // Supported payment method kinds for the "Share Payment Info" page
@@ -65,10 +66,21 @@ export interface PaymentMethod {
   createdAt: number;
 }
 
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  emoji: string;
+  targetAmount: number;
+  savedAmount: number;
+  createdAt: number;
+  deadline?: number; // Optional target date (timestamp)
+}
+
 export interface AppState {
   transactions: Transaction[];
   categories: Category[];
   settings: AppSettings;
   budgetGoals: BudgetGoal[];
   paymentMethods: PaymentMethod[];
+  savingsGoals: SavingsGoal[];
 }

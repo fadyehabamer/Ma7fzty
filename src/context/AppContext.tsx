@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { AppState, Category, Transaction, AppSettings, Currency, BudgetGoal, PaymentMethod } from '../types';
+import { AppState, Category, Transaction, AppSettings, Currency, BudgetGoal, PaymentMethod, SavingsGoal } from '../types';
 import { loadData, saveData, StorageKeys } from '../utils/storage';
 
 // Initial State
@@ -29,9 +29,11 @@ const initialState: AppState = {
         dailyReminder: false,
         dailyReminderTime: '20:00',
         profileName: '',
+        biometricEnabled: false,
     },
     budgetGoals: [],
     paymentMethods: [],
+    savingsGoals: [],
 };
 
 // Actions
@@ -53,9 +55,13 @@ type Action =
     | { type: 'SET_DAILY_REMINDER'; payload: boolean }
     | { type: 'SET_DAILY_REMINDER_TIME'; payload: string }
     | { type: 'SET_PROFILE_NAME'; payload: string }
+    | { type: 'SET_BIOMETRIC'; payload: boolean }
     | { type: 'ADD_PAYMENT_METHOD'; payload: PaymentMethod }
     | { type: 'UPDATE_PAYMENT_METHOD'; payload: PaymentMethod }
     | { type: 'DELETE_PAYMENT_METHOD'; payload: string }
+    | { type: 'ADD_SAVINGS_GOAL'; payload: SavingsGoal }
+    | { type: 'UPDATE_SAVINGS_GOAL'; payload: SavingsGoal }
+    | { type: 'DELETE_SAVINGS_GOAL'; payload: string }
     | { type: 'RESET_DATA' }
     | { type: 'IMPORT_STATE'; payload: AppState };
 
@@ -150,6 +156,11 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 settings: { ...state.settings, profileName: action.payload },
             };
+        case 'SET_BIOMETRIC':
+            return {
+                ...state,
+                settings: { ...state.settings, biometricEnabled: action.payload },
+            };
         case 'ADD_PAYMENT_METHOD':
             return {
                 ...state,
@@ -167,10 +178,27 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 paymentMethods: state.paymentMethods.filter((m) => m.id !== action.payload),
             };
+        case 'ADD_SAVINGS_GOAL':
+            return {
+                ...state,
+                savingsGoals: [...state.savingsGoals, action.payload],
+            };
+        case 'UPDATE_SAVINGS_GOAL':
+            return {
+                ...state,
+                savingsGoals: state.savingsGoals.map((g) =>
+                    g.id === action.payload.id ? action.payload : g
+                ),
+            };
+        case 'DELETE_SAVINGS_GOAL':
+            return {
+                ...state,
+                savingsGoals: state.savingsGoals.filter((g) => g.id !== action.payload),
+            };
         case 'RESET_DATA':
             return initialState;
         case 'IMPORT_STATE':
-            return { ...initialState, ...action.payload, paymentMethods: action.payload.paymentMethods || [] };
+            return { ...initialState, ...action.payload, paymentMethods: action.payload.paymentMethods || [], savingsGoals: action.payload.savingsGoals || [] };
         default:
             return state;
     }
@@ -208,6 +236,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                     settings: mergedSettings,
                     budgetGoals: savedState.budgetGoals || [],
                     paymentMethods: savedState.paymentMethods || [],
+                    savingsGoals: savedState.savingsGoals || [],
                 };
                 dispatch({ type: 'LOAD_STATE', payload: merged });
             }

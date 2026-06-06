@@ -14,6 +14,7 @@ import CategoriesScreen from '../screens/CategoriesScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LockScreen from '../screens/LockScreen';
 import PaymentMethodsScreen from '../screens/PaymentMethodsScreen';
+import SavingsGoalsScreen from '../screens/SavingsGoalsScreen';
 
 const Stack = createStackNavigator();
 
@@ -67,6 +68,7 @@ const RootNavigator = () => {
                         <Stack.Screen name="Categories" component={CategoriesScreen} />
                         <Stack.Screen name="AllTransactions" component={AllTransactionsScreen} />
                         <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
+                        <Stack.Screen name="SavingsGoals" component={SavingsGoalsScreen} />
                     </>
                 )}
             </Stack.Navigator>

@@ -8,6 +8,7 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { Layout, Fonts } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { useApp } from '../context/AppContext';
+import { isBiometricAvailable, getBiometricLabel, authenticateBiometric } from '../utils/biometrics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -25,6 +26,36 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
     const [entered, setEntered] = useState('');
     const [error, setError] = useState(false);
     const shakeAnim = useRef(new Animated.Value(0)).current;
+
+    const biometricEnabled = !!state.settings.biometricEnabled;
+    const [bioAvailable, setBioAvailable] = useState(false);
+    const [bioLabel, setBioLabel] = useState('');
+    const bioTried = useRef(false);
+
+    const runBiometric = async () => {
+        const ok = await authenticateBiometric(isAr ? 'افتح التطبيق' : 'Unlock Ma7fzty');
+        if (ok) onUnlock();
+    };
+
+    // On mount: if biometric is enabled and available, prompt automatically once.
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            if (!biometricEnabled) return;
+            const avail = await isBiometricAvailable();
+            if (!mounted) return;
+            setBioAvailable(avail);
+            if (!avail) return;
+            const label = await getBiometricLabel(lang);
+            if (mounted) setBioLabel(label);
+            if (!bioTried.current) {
+                bioTried.current = true;
+                const ok = await authenticateBiometric(isAr ? 'افتح التطبيق' : 'Unlock Ma7fzty');
+                if (ok && mounted) onUnlock();
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
 
     useEffect(() => {
         if (entered.length === 4) {
@@ -134,6 +165,21 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
                         );
                     })}
                 </View>
+
+                {bioAvailable && (
+                    <TouchableOpacity style={styles.bioBtn} onPress={runBiometric} activeOpacity={0.7}>
+                        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                            <Path d="M18.9 7a8 8 0 0 1 1.1 5v1a6 6 0 0 0 .8 3" stroke={colors.primary} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+                            <Path d="M8 11a4 4 0 0 1 8 0v1a10 10 0 0 0 2 6" stroke={colors.primary} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+                            <Path d="M12 11v2a14 14 0 0 0 2.5 8" stroke={colors.primary} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+                            <Path d="M8 15a18 18 0 0 0 1.8 6" stroke={colors.primary} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+                            <Path d="M4.9 19a22 22 0 0 1 -.9 -7v-1a8 8 0 0 1 12 -6.95" stroke={colors.primary} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+                        </Svg>
+                        <Text style={[styles.bioBtnText, { color: colors.primary }]}>
+                            {isAr ? `استخدم ${bioLabel}` : `Use ${bioLabel}`}
+                        </Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </SafeAreaView>
     );
@@ -175,6 +221,8 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     padDigit: { fontFamily: Fonts.bold, fontSize: 28 },
+    bioBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: Layout.spacing.md, paddingVertical: Layout.spacing.sm },
+    bioBtnText: { fontFamily: Fonts.semiBold, fontSize: 15 },
 });
 
 export default LockScreen;

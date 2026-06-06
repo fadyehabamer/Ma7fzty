@@ -12,6 +12,7 @@ import { useApp } from '../context/AppContext';
 import { clearAllData } from '../utils/storage';
 import { t, isRTL, getFlexDirection } from '../utils/i18n';
 import { exportToPdf, exportToCsv } from '../utils/exportData';
+import { isBiometricAvailable, getBiometricLabel, authenticateBiometric } from '../utils/biometrics';
 // Fix for deprecation warning: using legacy API
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -168,6 +169,27 @@ const SettingsScreen = () => {
 
     const hasPasscode = !!state.settings.passcode;
     const hasDailyReminder = !!state.settings.dailyReminder;
+    const hasBiometric = !!state.settings.biometricEnabled;
+
+    const handleToggleBiometric = async (value: boolean) => {
+        if (!value) {
+            dispatch({ type: 'SET_BIOMETRIC', payload: false });
+            return;
+        }
+        const avail = await isBiometricAvailable();
+        if (!avail) {
+            Alert.alert(
+                isAr ? 'غير متاح' : 'Not available',
+                isAr
+                    ? 'لا يوجد قياس حيوي مُسجّل على الجهاز، أو يلزم إعادة بناء التطبيق بعد إضافة هذه الميزة.'
+                    : 'No biometrics enrolled on this device, or the app needs to be rebuilt after adding this feature.'
+            );
+            return;
+        }
+        const label = await getBiometricLabel(lang);
+        const ok = await authenticateBiometric(isAr ? `تأكيد ${label}` : `Confirm ${label}`);
+        if (ok) dispatch({ type: 'SET_BIOMETRIC', payload: true });
+    };
 
     const handleToggleReminder = async (value: boolean) => {
         try {
@@ -288,6 +310,7 @@ const SettingsScreen = () => {
         } else if (passcodeStep === 'remove') {
             if (code === state.settings.passcode) {
                 dispatch({ type: 'SET_PASSCODE', payload: null });
+                dispatch({ type: 'SET_BIOMETRIC', payload: false });
                 setShowPasscodeModal(false);
                 Alert.alert(
                     isAr ? '\u062a\u0645 \u0627\u0644\u062a\u0639\u0637\u064a\u0644' : 'Disabled',
@@ -430,6 +453,24 @@ const SettingsScreen = () => {
                                 onPress={() => { setPasscodeStep('enter'); setNewPasscode(''); setPasscodeInput(''); setShowPasscodeModal(true); }}
                                 rtl={rtl} colors={colors} fontScale={fontScale}
                             />
+                            <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
+                            <View style={[styles.row, { flexDirection: rtl ? 'row-reverse' : 'row' }]}>
+                                <Text style={[styles.rowIcon, { fontSize: 20 * fontScale }, rtl ? { marginLeft: Layout.spacing.md, marginRight: 0 } : {}]}>{'🫆'}</Text>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.rowLabel, { color: colors.text, fontSize: 16 * fontScale }, rtl && { textAlign: 'right' }]}>
+                                        {isAr ? 'فتح بالبصمة / الوجه' : 'Biometric Unlock'}
+                                    </Text>
+                                    <Text style={[styles.rowSubLabel, { color: colors.textSecondary, fontSize: 12 * fontScale }, rtl && { textAlign: 'right' }]}>
+                                        {isAr ? 'استخدم بصمة الإصبع أو الوجه لفتح التطبيق' : 'Use fingerprint or Face ID to unlock'}
+                                    </Text>
+                                </View>
+                                <Switch
+                                    value={hasBiometric}
+                                    onValueChange={handleToggleBiometric}
+                                    trackColor={{ false: colors.border, true: colors.primary + '60' }}
+                                    thumbColor={hasBiometric ? colors.primary : colors.textSecondary}
+                                />
+                            </View>
                         </>
                     )}
                 </View>
@@ -482,6 +523,8 @@ const SettingsScreen = () => {
                     <SettingsRow icon="📂" label={t('manageCategories', lang)} value={`${state.categories.length}`} onPress={() => (navigation as any).navigate('Categories')} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
                     <SettingsRow icon="💳" label={lang === 'ar' ? 'معلومات الدفع' : 'Payment Info'} value={`${(state.paymentMethods || []).length}`} onPress={() => (navigation as any).navigate('PaymentMethods')} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
+                    <SettingsRow icon="🎯" label={lang === 'ar' ? 'أهداف الادخار' : 'Savings Goals'} value={`${(state.savingsGoals || []).length}`} onPress={() => (navigation as any).navigate('SavingsGoals')} rtl={rtl} colors={colors} fontScale={fontScale} />
                 </View>
 
                 {/* Export */}
