@@ -48,13 +48,6 @@
       "@react-native-community/datetimepicker",
       "expo-notifications",
       [
-        "expo-speech-recognition",
-        {
-          "microphonePermission": "Allow Ma7fzty to use your microphone for voice dictation.",
-          "speechRecognitionPermission": "Allow Ma7fzty to convert your voice into transaction notes."
-        }
-      ],
-      [
         "expo-local-authentication",
         {
           "faceIDPermission": "Allow Ma7fzty to use Face ID to unlock the app."

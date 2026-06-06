@@ -24,7 +24,6 @@ import { Transaction } from '../types';
 import { t, isRTL, getFlexDirection } from '../utils/i18n';
 import { exportToPdf, exportToCsv } from '../utils/exportData';
 import TransactionDetailsModal from '../components/common/TransactionDetailsModal';
-import QuickAddNote from '../components/common/QuickAddNote';
 
 const HomeScreen = ({ navigation }: any) => {
     const { state, dispatch } = useApp();
@@ -190,8 +189,6 @@ const HomeScreen = ({ navigation }: any) => {
                     />
                 </View>
             )}
-
-            <QuickAddNote />
 
             {/* Month / All Time Toggle */}
             <View style={styles.toggleRow}>
