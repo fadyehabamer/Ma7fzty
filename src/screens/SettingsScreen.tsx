@@ -480,6 +480,8 @@ const SettingsScreen = () => {
                     <SettingsRow icon="🌐" label={t('language', lang)} value={lang === 'en' ? 'English' : 'عربي'} onPress={handleToggleLanguage} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
                     <SettingsRow icon="📂" label={t('manageCategories', lang)} value={`${state.categories.length}`} onPress={() => (navigation as any).navigate('Categories')} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
+                    <SettingsRow icon="💳" label={lang === 'ar' ? 'معلومات الدفع' : 'Payment Info'} value={`${(state.paymentMethods || []).length}`} onPress={() => (navigation as any).navigate('PaymentMethods')} rtl={rtl} colors={colors} fontScale={fontScale} />
                 </View>
 
                 {/* Export */}

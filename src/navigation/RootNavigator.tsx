@@ -13,6 +13,7 @@ import AddTransactionScreen from '../screens/AddTransactionScreen';
 import CategoriesScreen from '../screens/CategoriesScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LockScreen from '../screens/LockScreen';
+import PaymentMethodsScreen from '../screens/PaymentMethodsScreen';
 
 const Stack = createStackNavigator();
 
@@ -65,6 +66,7 @@ const RootNavigator = () => {
                         <Stack.Screen name="AddTransaction" component={AddTransactionScreen} options={{ presentation: 'modal', headerShown: false }} />
                         <Stack.Screen name="Categories" component={CategoriesScreen} />
                         <Stack.Screen name="AllTransactions" component={AllTransactionsScreen} />
+                        <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
                     </>
                 )}
             </Stack.Navigator>

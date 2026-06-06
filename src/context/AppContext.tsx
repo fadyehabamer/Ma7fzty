@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { AppState, Category, Transaction, AppSettings, Currency, BudgetGoal } from '../types';
+import { AppState, Category, Transaction, AppSettings, Currency, BudgetGoal, PaymentMethod } from '../types';
 import { loadData, saveData, StorageKeys } from '../utils/storage';
 
 // Initial State
@@ -28,8 +28,10 @@ const initialState: AppState = {
         fontScale: 1.0,
         dailyReminder: false,
         dailyReminderTime: '20:00',
+        profileName: '',
     },
     budgetGoals: [],
+    paymentMethods: [],
 };
 
 // Actions
@@ -50,6 +52,10 @@ type Action =
     | { type: 'SET_FONT_SCALE'; payload: number }
     | { type: 'SET_DAILY_REMINDER'; payload: boolean }
     | { type: 'SET_DAILY_REMINDER_TIME'; payload: string }
+    | { type: 'SET_PROFILE_NAME'; payload: string }
+    | { type: 'ADD_PAYMENT_METHOD'; payload: PaymentMethod }
+    | { type: 'UPDATE_PAYMENT_METHOD'; payload: PaymentMethod }
+    | { type: 'DELETE_PAYMENT_METHOD'; payload: string }
     | { type: 'RESET_DATA' }
     | { type: 'IMPORT_STATE'; payload: AppState };
 
@@ -139,10 +145,32 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 settings: { ...state.settings, dailyReminderTime: action.payload },
             };
+        case 'SET_PROFILE_NAME':
+            return {
+                ...state,
+                settings: { ...state.settings, profileName: action.payload },
+            };
+        case 'ADD_PAYMENT_METHOD':
+            return {
+                ...state,
+                paymentMethods: [...state.paymentMethods, action.payload],
+            };
+        case 'UPDATE_PAYMENT_METHOD':
+            return {
+                ...state,
+                paymentMethods: state.paymentMethods.map((m) =>
+                    m.id === action.payload.id ? action.payload : m
+                ),
+            };
+        case 'DELETE_PAYMENT_METHOD':
+            return {
+                ...state,
+                paymentMethods: state.paymentMethods.filter((m) => m.id !== action.payload),
+            };
         case 'RESET_DATA':
             return initialState;
         case 'IMPORT_STATE':
-            return action.payload;
+            return { ...initialState, ...action.payload, paymentMethods: action.payload.paymentMethods || [] };
         default:
             return state;
     }
@@ -179,6 +207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                     ...savedState,
                     settings: mergedSettings,
                     budgetGoals: savedState.budgetGoals || [],
+                    paymentMethods: savedState.paymentMethods || [],
                 };
                 dispatch({ type: 'LOAD_STATE', payload: merged });
             }

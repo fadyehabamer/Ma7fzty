@@ -44,6 +44,25 @@ export interface AppSettings {
   fontScale: number; // 0.8 to 1.5
   dailyReminder?: boolean;
   dailyReminderTime?: string; // HH:mm format
+  profileName?: string; // Name shown when sharing payment info
+}
+
+// Supported payment method kinds for the "Share Payment Info" page
+export type PaymentMethodType =
+  | 'paypal'
+  | 'instapay'
+  | 'wallet'
+  | 'iban'
+  | 'bank'
+  | 'crypto'
+  | 'other';
+
+export interface PaymentMethod {
+  id: string;
+  type: PaymentMethodType;
+  label?: string; // Optional custom nickname e.g. "My CIB account"
+  fields: Record<string, string>; // Type-specific values (keyed by PaymentField.key)
+  createdAt: number;
 }
 
 export interface AppState {
@@ -51,4 +70,5 @@ export interface AppState {
   categories: Category[];
   settings: AppSettings;
   budgetGoals: BudgetGoal[];
+  paymentMethods: PaymentMethod[];
 }
