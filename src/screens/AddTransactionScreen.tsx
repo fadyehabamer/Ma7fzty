@@ -29,6 +29,7 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
     const [calMonth, setCalMonth] = useState(dayjs());
     const [type, setType] = useState<TransactionType>(initData?.type || 'expense');
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(initData?.categoryId || null);
+    const [selectorWidth, setSelectorWidth] = useState(0);
     const slideAnim = useRef(new Animated.Value(0)).current;
     
     const isFirstRender = useRef(true);
@@ -139,7 +140,10 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
     };
 
     const selectedCat = categories.find((c) => c.id === selectedCategoryId);
-    const indicatorLeft = slideAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '50%'] });
+    const SELECTOR_PAD = 4;
+    const half = selectorWidth > 0 ? (selectorWidth - SELECTOR_PAD * 2) / 2 : 0;
+    const indicatorWidth = half > 0 ? half : '50%';
+    const indicatorTranslate = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [SELECTOR_PAD, SELECTOR_PAD + half] });
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
@@ -156,8 +160,11 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
 
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                     {/* Type Selector */}
-                    <View style={[styles.typeSelectorOuter, { backgroundColor: colors.card }]}>
-                        <Animated.View style={[styles.typeIndicator, { left: indicatorLeft, backgroundColor: type === 'expense' ? colors.danger + '18' : colors.success + '18' }]} />
+                    <View
+                        style={[styles.typeSelectorOuter, { backgroundColor: colors.card }]}
+                        onLayout={(e) => setSelectorWidth(e.nativeEvent.layout.width)}
+                    >
+                        <Animated.View style={[styles.typeIndicator, { width: indicatorWidth, transform: [{ translateX: indicatorTranslate }], backgroundColor: type === 'expense' ? colors.danger + '18' : colors.success + '18' }]} />
                         <TouchableOpacity style={styles.typeButton} onPress={() => setType('expense')} activeOpacity={0.7}>
                             <Text style={[styles.typeText, { color: colors.textSecondary, fontSize: 16 * fontScale }, type === 'expense' && { color: colors.danger, fontFamily: Fonts.bold }]}>{t('expense', lang)}</Text>
                         </TouchableOpacity>
@@ -194,20 +201,29 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
 
                     {/* Category */}
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 14 * fontScale }, rtl && { textAlign: 'right' }]}>{t('category', lang)}</Text>
-                    <View style={styles.categoriesGrid}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.categoriesScroll}
+                        contentContainerStyle={[styles.categoriesScrollContent, rtl && { flexDirection: 'row-reverse' }]}
+                        keyboardShouldPersistTaps="handled"
+                    >
                         {categories.map((cat) => {
                             const isSelected = selectedCategoryId === cat.id;
                             const selColor = type === 'expense' ? colors.danger : colors.success;
                             return (
-                                <TouchableOpacity key={cat.id} style={styles.categoryItem} onPress={() => setSelectedCategoryId(cat.id)} activeOpacity={0.6}>
-                                    <View style={[styles.emojiContainer, { backgroundColor: colors.card, borderColor: colors.border }, isSelected && { backgroundColor: selColor + '15', borderColor: selColor, borderWidth: 2 }]}>
-                                        <Text style={[styles.emoji, { fontSize: 24 * fontScale }]}>{cat.emoji}</Text>
-                                    </View>
-                                    <Text style={[styles.categoryName, { color: colors.textSecondary, fontSize: 12 * fontScale }, isSelected && { color: selColor, fontFamily: Fonts.bold }]} numberOfLines={1}>{cat.name}</Text>
+                                <TouchableOpacity
+                                    key={cat.id}
+                                    style={[styles.categoryChip, { flexDirection: getFlexDirection(lang), backgroundColor: colors.card, borderColor: colors.border }, isSelected && { backgroundColor: selColor, borderColor: selColor }]}
+                                    onPress={() => setSelectedCategoryId(cat.id)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[styles.chipEmoji, { fontSize: 18 * fontScale }]}>{cat.emoji}</Text>
+                                    <Text style={[styles.chipName, { color: colors.textSecondary, fontSize: 14 * fontScale }, isSelected && { color: '#FFFFFF', fontFamily: Fonts.bold }]} numberOfLines={1}>{cat.name}</Text>
                                 </TouchableOpacity>
                             );
                         })}
-                    </View>
+                    </ScrollView>
 
                     {/* Note & Photo */}
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 14 * fontScale }, rtl && { textAlign: 'right' }]}>{t('note', lang)}</Text>
@@ -371,7 +387,6 @@ const styles = StyleSheet.create({
     content: { padding: Layout.spacing.md, paddingBottom: Layout.spacing.md },
     typeSelectorOuter: {
         flexDirection: 'row', borderRadius: Layout.borderRadius.md, padding: 4,
-        paddingLeft: 20, // Added significant left padding for tabs as requested
         marginBottom: Layout.spacing.lg, position: 'relative', shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 2
     },
@@ -387,11 +402,11 @@ const styles = StyleSheet.create({
     },
     amountInput: { fontFamily: Fonts.bold, fontSize: 48, minWidth: 120, textAlign: 'center' },
     sectionTitle: { fontFamily: Fonts.semiBold, fontSize: 14, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Layout.spacing.sm, marginTop: Layout.spacing.xs },
-    categoriesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Layout.spacing.sm, marginBottom: Layout.spacing.lg },
-    categoryItem: { alignItems: 'center', width: '22%', marginBottom: Layout.spacing.sm },
-    emojiContainer: { width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center', marginBottom: 4, borderWidth: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 2, elevation: 1 },
-    emoji: { fontSize: 24 },
-    categoryName: { fontFamily: Fonts.regular, fontSize: 12, textAlign: 'center' },
+    categoriesScroll: { marginHorizontal: -Layout.spacing.md, marginBottom: Layout.spacing.lg },
+    categoriesScrollContent: { paddingHorizontal: Layout.spacing.md, gap: Layout.spacing.sm, alignItems: 'center' },
+    categoryChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, borderWidth: 1.5, gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 2, elevation: 1 },
+    chipEmoji: { fontSize: 18 },
+    chipName: { fontFamily: Fonts.medium, fontSize: 14 },
     noteCard: { borderRadius: Layout.borderRadius.md, marginBottom: Layout.spacing.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 2 },
     noteInput: { padding: Layout.spacing.md, fontFamily: Fonts.regular, fontSize: 16, minHeight: 80, textAlignVertical: 'top' },
     photoRow: { padding: Layout.spacing.md, paddingTop: 0, alignItems: 'center', gap: Layout.spacing.md },
