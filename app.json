@@ -52,6 +52,14 @@
         {
           "faceIDPermission": "Allow Ma7fzty to use Face ID to unlock the app."
         }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Ma7fzty to use the microphone to add expenses and income by voice.",
+          "speechRecognitionPermission": "Allow Ma7fzty to recognize your speech to add expenses and income by voice.",
+          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
+        }
       ]
     ],
     "extra": {

@@ -14,6 +14,7 @@ import { t, isRTL, getFlexDirection } from '../utils/i18n';
 import { evaluateExpression, hasOperator } from '../utils/calc';
 import { Ionicons } from '@expo/vector-icons';
 import AppIcon from '../components/common/AppIcon';
+import VoiceInputModal, { VoiceApplyPayload } from '../components/common/VoiceInputModal';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'react-native';
 
@@ -46,16 +47,24 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(editTx?.categoryId ?? initData?.categoryId ?? null);
     const [selectorWidth, setSelectorWidth] = useState(0);
     const [showCalc, setShowCalc] = useState(false);
+    const [showVoice, setShowVoice] = useState(false);
     const slideAnim = useRef(new Animated.Value(0)).current;
-    
-    const isFirstRender = useRef(true);
 
-    useEffect(() => { 
+    const isFirstRender = useRef(true);
+    // When a voice result sets type + category together, the type-change effect
+    // below would otherwise clear the category. This lets us skip one reset.
+    const skipCategoryReset = useRef(false);
+
+    useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
             return;
         }
-        setSelectedCategoryId(null); 
+        if (skipCategoryReset.current) {
+            skipCategoryReset.current = false;
+            return;
+        }
+        setSelectedCategoryId(null);
     }, [type]);
     
     useEffect(() => {
@@ -141,6 +150,18 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
         navigation.goBack();
     };
 
+    // Pre-fill the form from a confirmed voice result, then let the user review/save.
+    const applyVoiceResult = (r: VoiceApplyPayload) => {
+        if (r.type !== type) {
+            skipCategoryReset.current = true; // keep the category the voice picked
+            setType(r.type);
+        }
+        setAmount(fmtPlain(String(r.amount)));
+        setSelectedCategoryId(r.categoryId);
+        if (r.note) setNote(r.note);
+        setShowVoice(false);
+    };
+
     const handleAmountChange = (text: string) => {
         let clean = text.replace(/[^0-9.+\-*/×÷]/g, '').replace(/×/g, '*').replace(/÷/g, '/');
         if (hasOperator(clean)) {
@@ -183,7 +204,13 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                         </Svg>
                     </TouchableOpacity>
                     <Text style={[styles.title, { color: colors.text, fontSize: 18 * fontScale }]}>{isEditing ? (lang === 'ar' ? 'تعديل المعاملة' : 'Edit Transaction') : t('addTransaction', lang)}</Text>
-                    <View style={{ width: 40 }} />
+                    {isEditing ? (
+                        <View style={{ width: 40 }} />
+                    ) : (
+                        <TouchableOpacity style={[styles.headerVoiceBtn, { backgroundColor: colors.primary + '15' }]} onPress={() => setShowVoice(true)} activeOpacity={0.7} accessibilityLabel={t('voiceTitle', lang)}>
+                            <Ionicons name="mic" size={22} color={colors.primary} />
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -429,6 +456,16 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+
+            <VoiceInputModal
+                visible={showVoice}
+                onClose={() => setShowVoice(false)}
+                onApply={applyVoiceResult}
+                lang={lang}
+                colors={colors}
+                categories={state.categories}
+                currency={state.settings.currency}
+            />
         </SafeAreaView>
     );
 };
@@ -437,6 +474,7 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Layout.spacing.md, paddingVertical: Layout.spacing.sm, borderBottomWidth: 1 },
     headerBackBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 20 },
+    headerVoiceBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 20 },
     title: { flex: 1, fontFamily: Fonts.bold, fontSize: 18, textAlign: 'center' },
     content: { padding: Layout.spacing.md, paddingBottom: Layout.spacing.md },
     typeSelectorOuter: {
