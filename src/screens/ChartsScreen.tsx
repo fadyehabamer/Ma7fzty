@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import PieChart from '../components/common/PieChart';
 import AreaChart from '../components/common/AreaChart';
 import MonthSelector from '../components/common/MonthSelector';
+import InsightsCard from '../components/common/InsightsCard';
 import { t, isRTL, getFlexDirection, formatCurrency } from '../utils/i18n';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -111,6 +112,21 @@ const ChartsScreen = () => {
 
             {viewMode === 'month' && <MonthSelector currentDate={selectedMonth} onPrev={handlePrevMonth} onNext={handleNextMonth} />}
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                {/* Insights */}
+                {viewMode === 'month' && (
+                    <View style={styles.insightsWrap}>
+                        <InsightsCard
+                            transactions={transactions}
+                            categories={categories}
+                            currency={currency}
+                            lang={lang}
+                            colors={colors}
+                            month={selectedMonth}
+                            fontScale={fontScale}
+                        />
+                    </View>
+                )}
+
                 {/* Summary */}
                 <View style={[styles.summaryRow, { flexDirection: getFlexDirection(lang) }]}>
                     <View style={[styles.summaryBox, { backgroundColor: colors.card, borderLeftColor: colors.success }]}>
@@ -208,6 +224,7 @@ const styles = StyleSheet.create({
     viewModeBtn: { paddingHorizontal: Layout.spacing.md, paddingVertical: 8, borderRadius: Layout.borderRadius.sm },
     viewModeText: { fontFamily: Fonts.semiBold, fontSize: 13 },
     scrollContent: { paddingBottom: 80 },
+    insightsWrap: { paddingHorizontal: Layout.spacing.md },
     summaryRow: { flexDirection: 'row', paddingHorizontal: Layout.spacing.md, gap: Layout.spacing.sm, marginBottom: Layout.spacing.md },
     summaryBox: { flex: 1, borderRadius: Layout.borderRadius.md, padding: Layout.spacing.md, borderLeftWidth: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 2 },
     summaryLabel: { fontFamily: Fonts.medium, fontSize: 12, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },

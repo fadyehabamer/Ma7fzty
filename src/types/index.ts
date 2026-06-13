@@ -24,6 +24,36 @@ export interface Transaction {
   note?: string;
   imageUri?: string;
   type: TransactionType;
+  accountId?: string; // Which account/wallet this belongs to (undefined = unassigned)
+}
+
+// A money container: cash, a bank account, a card, etc. Its live balance is
+// openingBalance + (income − expense) of the transactions assigned to it.
+export type AccountType = 'cash' | 'bank' | 'card' | 'savings' | 'other';
+
+export interface Account {
+  id: string;
+  name: string;
+  icon: string;           // Ionicons name (same system as categories)
+  type: AccountType;
+  color: string;          // Hex accent for the card
+  openingBalance: number; // Starting balance before any tracked transactions
+  createdAt: number;
+}
+
+// Money lent or borrowed. `paidAmount` tracks partial settle-up;
+// fully settled when paidAmount >= amount.
+export type DebtType = 'owedToMe' | 'iOwe';
+
+export interface Debt {
+  id: string;
+  type: DebtType;
+  person: string;
+  amount: number;
+  paidAmount: number;
+  note?: string;
+  dueDate?: number;
+  createdAt: number;
 }
 
 export interface BudgetGoal {
@@ -84,4 +114,6 @@ export interface AppState {
   budgetGoals: BudgetGoal[];
   paymentMethods: PaymentMethod[];
   savingsGoals: SavingsGoal[];
+  accounts: Account[];
+  debts: Debt[];
 }

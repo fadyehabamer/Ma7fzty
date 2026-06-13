@@ -81,6 +81,9 @@ const VoiceInputModal = ({ visible, onClose, onApply, lang, colors, categories, 
     const rings = useRef([new Animated.Value(0), new Animated.Value(0), new Animated.Value(0)]).current;
     const ringAnims = useRef<Animated.CompositeAnimation[]>([]);
     const level = useRef(new Animated.Value(0)).current;
+    const reviewAnim = useRef(new Animated.Value(0)).current;
+    const amountPulse = useRef(new Animated.Value(0)).current;
+    const amountPulseAnim = useRef<Animated.CompositeAnimation | null>(null);
 
     const startRings = () => {
         stopRings();
@@ -105,6 +108,35 @@ const VoiceInputModal = ({ visible, onClose, onApply, lang, colors, categories, 
         if (status === 'listening') startRings();
         else stopRings();
     }, [status]);
+
+    // Slide + fade the review panel in once recognition resolves.
+    useEffect(() => {
+        if (status === 'review') {
+            reviewAnim.setValue(0);
+            Animated.timing(reviewAnim, {
+                toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true,
+            }).start();
+        }
+    }, [status]);
+
+    // Gently pulse the amount field while it still needs a value typed in.
+    useEffect(() => {
+        const needsAmount = status === 'review' && parsed?.amount == null && !editAmount;
+        amountPulseAnim.current?.stop();
+        if (needsAmount) {
+            amountPulse.setValue(0);
+            amountPulseAnim.current = Animated.loop(
+                Animated.sequence([
+                    Animated.timing(amountPulse, { toValue: 1, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                    Animated.timing(amountPulse, { toValue: 0, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                ])
+            );
+            amountPulseAnim.current.start();
+        } else {
+            amountPulse.setValue(0);
+        }
+        return () => amountPulseAnim.current?.stop();
+    }, [status, parsed, editAmount]);
 
     // ─── Speech recognition lifecycle ────────────────────────────
     const finalize = (text: string) => {
@@ -167,6 +199,14 @@ const VoiceInputModal = ({ visible, onClose, onApply, lang, colors, categories, 
                 maxAlternatives: 1,
                 contextualStrings: contextual,
                 volumeChangeEventOptions: { enabled: true, intervalMillis: 120 },
+                // Give the speaker more room: don't finalize the moment they pause.
+                // MINIMUM keeps the session open at the start, POSSIBLY_COMPLETE tolerates
+                // mid-sentence pauses, COMPLETE is how long of a silence ends it.
+                androidIntentOptions: {
+                    EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS: 2000,
+                    EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: 2000,
+                    EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: 2500,
+                },
             });
         } catch {
             setStatus('error');
@@ -233,6 +273,7 @@ const VoiceInputModal = ({ visible, onClose, onApply, lang, colors, categories, 
 
     const accent = editType === 'expense' ? colors.danger : colors.success;
     const reviewCats = categories.filter((c) => c.type === editType);
+    const amountMissing = parsed?.amount == null && !editAmount;
 
     const numericAmount = parseFloat(toWesternDigits(editAmount).replace(/,/g, ''));
     const canApply = !isNaN(numericAmount) && numericAmount > 0 && !!editCategoryId;
@@ -321,9 +362,27 @@ const VoiceInputModal = ({ visible, onClose, onApply, lang, colors, categories, 
                     {/* ── Review & confirm ── */}
                     {status === 'review' && (
                         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                            <View style={[styles.transcriptBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                                <Text style={[styles.transcriptLabel, { color: colors.textSecondary }, rtl && { textAlign: 'right' }]}>{t('voiceTranscript', lang)}</Text>
-                                <Text style={[styles.transcriptText, { color: colors.text }, rtl && { textAlign: 'right' }]}>“{parsed?.rawText}”</Text>
+                            <Animated.View
+                                style={{
+                                    opacity: reviewAnim,
+                                    transform: [{ translateY: reviewAnim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
+                                }}
+                            >
+                            {/* What we understood */}
+                            <View style={[styles.summaryRow, { flexDirection: getFlexDirection(lang) }]}>
+                                <Ionicons name="sparkles" size={16} color={colors.primary} />
+                                <Text style={[styles.summaryText, { color: colors.text }]}>{t('voiceUnderstood', lang)}</Text>
+                            </View>
+
+                            {/* Transcript */}
+                            <View style={[styles.transcriptCard, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: getFlexDirection(lang) }]}>
+                                <View style={[styles.quoteIcon, { backgroundColor: colors.primary + '14' }]}>
+                                    <Ionicons name="chatbubble-ellipses" size={16} color={colors.primary} />
+                                </View>
+                                <View style={styles.transcriptTextWrap}>
+                                    <Text style={[styles.transcriptLabel, { color: colors.textSecondary }, rtl && { textAlign: 'right' }]}>{t('voiceTranscript', lang)}</Text>
+                                    <Text style={[styles.transcriptText, { color: colors.text }, rtl && { textAlign: 'right' }]} numberOfLines={2}>“{parsed?.rawText}”</Text>
+                                </View>
                             </View>
 
                             {/* Type toggle */}
@@ -334,10 +393,11 @@ const VoiceInputModal = ({ visible, onClose, onApply, lang, colors, categories, 
                                     return (
                                         <TouchableOpacity
                                             key={ty}
-                                            style={[styles.typePill, { borderColor: colors.border }, active && { backgroundColor: c + '18', borderColor: c }]}
+                                            style={[styles.typePill, { flexDirection: getFlexDirection(lang), borderColor: colors.border }, active && { backgroundColor: c + '18', borderColor: c }]}
                                             onPress={() => switchType(ty)}
                                             activeOpacity={0.8}
                                         >
+                                            <Ionicons name={ty === 'expense' ? 'arrow-down-circle' : 'arrow-up-circle'} size={17} color={active ? c : colors.textSecondary} />
                                             <Text style={[styles.typePillText, { color: active ? c : colors.textSecondary, fontFamily: active ? Fonts.bold : Fonts.medium }]}>
                                                 {t(ty === 'expense' ? 'expense' : 'income', lang)}
                                             </Text>
@@ -348,9 +408,18 @@ const VoiceInputModal = ({ visible, onClose, onApply, lang, colors, categories, 
 
                             {/* Amount */}
                             <Text style={[styles.fieldLabel, { color: colors.textSecondary }, rtl && { textAlign: 'right' }]}>{t('amount', lang)}</Text>
-                            <View style={[styles.amountBox, { backgroundColor: colors.surface, borderColor: accent + '55', flexDirection: lang === 'ar' ? 'row-reverse' : 'row' }]}>
+                            <View
+                                style={[
+                                    styles.amountBox,
+                                    {
+                                        backgroundColor: colors.surface,
+                                        borderColor: amountMissing ? colors.warning : accent + '55',
+                                        flexDirection: lang === 'ar' ? 'row-reverse' : 'row',
+                                    },
+                                ]}
+                            >
                                 <TextInput
-                                    style={[styles.amountInput, { color: accent, textAlign: lang === 'ar' ? 'right' : 'left' }]}
+                                    style={[styles.amountInput, { color: amountMissing ? colors.warning : accent, textAlign: lang === 'ar' ? 'right' : 'left' }]}
                                     value={editAmount}
                                     onChangeText={(txt) => setEditAmount(toWesternDigits(txt).replace(/[^0-9.]/g, ''))}
                                     keyboardType="numeric"
@@ -358,10 +427,18 @@ const VoiceInputModal = ({ visible, onClose, onApply, lang, colors, categories, 
                                     placeholderTextColor={colors.textSecondary + '70'}
                                     autoFocus={!editAmount}
                                 />
-                                <Text style={[styles.currencyText, { color: accent }]}>{lang === 'ar' ? currency?.symbol : currency?.code}</Text>
+                                <Text style={[styles.currencyText, { color: amountMissing ? colors.warning : accent }]}>{lang === 'ar' ? currency?.symbol : currency?.code}</Text>
                             </View>
-                            {parsed && parsed.amount == null && (
-                                <Text style={[styles.warnText, { color: colors.warning }, rtl && { textAlign: 'right' }]}>{t('voiceNoAmount', lang)}</Text>
+                            {amountMissing && (
+                                <Animated.View
+                                    style={[
+                                        styles.warnRow,
+                                        { flexDirection: getFlexDirection(lang), opacity: amountPulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] }) },
+                                    ]}
+                                >
+                                    <Ionicons name="alert-circle" size={14} color={colors.warning} />
+                                    <Text style={[styles.warnText, { color: colors.warning }, rtl && { textAlign: 'right' }]}>{t('voiceNoAmount', lang)}</Text>
+                                </Animated.View>
                             )}
 
                             {/* Category */}
@@ -409,6 +486,7 @@ const VoiceInputModal = ({ visible, onClose, onApply, lang, colors, categories, 
                                     <Text style={styles.primaryBtnText}>{t('voiceUse', lang)}</Text>
                                 </TouchableOpacity>
                             </View>
+                            </Animated.View>
                         </ScrollView>
                     )}
                 </View>
@@ -438,19 +516,25 @@ const styles = StyleSheet.create({
 
     errorCircle: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' },
 
-    transcriptBox: { borderRadius: Layout.borderRadius.md, borderWidth: 1, padding: Layout.spacing.md, marginBottom: Layout.spacing.md },
-    transcriptLabel: { fontFamily: Fonts.semiBold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+    summaryRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2, marginBottom: Layout.spacing.sm },
+    summaryText: { fontFamily: Fonts.bold, fontSize: 15 },
+
+    transcriptCard: { flexDirection: 'row', alignItems: 'center', gap: Layout.spacing.sm, borderRadius: Layout.borderRadius.md, borderWidth: 1, paddingVertical: Layout.spacing.sm, paddingHorizontal: Layout.spacing.md, marginBottom: Layout.spacing.md },
+    quoteIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    transcriptTextWrap: { flex: 1 },
+    transcriptLabel: { fontFamily: Fonts.semiBold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
     transcriptText: { fontFamily: Fonts.medium, fontSize: 16 },
 
     typeRow: { flexDirection: 'row', gap: Layout.spacing.sm, marginBottom: Layout.spacing.md },
-    typePill: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: Layout.borderRadius.sm, borderWidth: 1.5 },
+    typePill: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: Layout.borderRadius.sm, borderWidth: 1.5 },
     typePillText: { fontFamily: Fonts.medium, fontSize: 15 },
 
     fieldLabel: { fontFamily: Fonts.semiBold, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
     amountBox: { flexDirection: 'row', alignItems: 'center', borderRadius: Layout.borderRadius.md, borderWidth: 1.5, paddingHorizontal: Layout.spacing.md, marginBottom: Layout.spacing.sm },
     amountInput: { flex: 1, fontFamily: Fonts.bold, fontSize: 32, paddingVertical: Layout.spacing.sm },
     currencyText: { fontFamily: Fonts.bold, fontSize: 18, marginHorizontal: 6 },
-    warnText: { fontFamily: Fonts.medium, fontSize: 12, marginBottom: Layout.spacing.sm },
+    warnRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: Layout.spacing.sm },
+    warnText: { fontFamily: Fonts.medium, fontSize: 12, flex: 1 },
 
     catScroll: { gap: Layout.spacing.sm, paddingVertical: 4, marginBottom: 4 },
     catChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 22, borderWidth: 1.5 },

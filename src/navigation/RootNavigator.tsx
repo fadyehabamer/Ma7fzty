@@ -15,6 +15,8 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import LockScreen from '../screens/LockScreen';
 import PaymentMethodsScreen from '../screens/PaymentMethodsScreen';
 import SavingsGoalsScreen from '../screens/SavingsGoalsScreen';
+import AccountsScreen from '../screens/AccountsScreen';
+import DebtsScreen from '../screens/DebtsScreen';
 
 const Stack = createStackNavigator();
 
@@ -69,6 +71,8 @@ const RootNavigator = () => {
                         <Stack.Screen name="AllTransactions" component={AllTransactionsScreen} />
                         <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
                         <Stack.Screen name="SavingsGoals" component={SavingsGoalsScreen} />
+                        <Stack.Screen name="Accounts" component={AccountsScreen} />
+                        <Stack.Screen name="Debts" component={DebtsScreen} />
                     </>
                 )}
             </Stack.Navigator>

@@ -41,6 +41,7 @@ const HomeScreen = ({ navigation }: any) => {
     const [showExportModal, setShowExportModal] = useState(false);
     const [viewMode, setViewMode] = useState<'month' | 'all'>('month');
     const [budgetOpen, setBudgetOpen] = useState(false);
+    const [actionsOpen, setActionsOpen] = useState(true);
     const prevTxCount = useRef(transactions.length);
 
     // When a single new transaction is added, jump to its month
@@ -253,6 +254,31 @@ const HomeScreen = ({ navigation }: any) => {
                 <SummaryCard income={income} expense={expense} currency={currency} lang={lang} />
             </View>
 
+            {/* Quick actions (collapsible) */}
+            <View style={styles.quickWrap}>
+                <TouchableOpacity style={[styles.quickToggle, { flexDirection: getFlexDirection(lang) }]} onPress={() => setActionsOpen((o) => !o)} activeOpacity={0.7}>
+                    <Text style={[styles.quickToggleLabel, { color: colors.textSecondary, fontSize: 12 * fs }]}>{t('shortcuts', lang)}</Text>
+                    <Ionicons name={actionsOpen ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+                {actionsOpen && (
+                    <View style={[styles.quickActions, { flexDirection: getFlexDirection(lang) }]}>
+                        {[
+                            { key: 'accounts', label: t('accounts', lang), icon: 'wallet', color: '#0EA5E9', route: 'Accounts' },
+                            { key: 'debts', label: t('debts', lang), icon: 'swap-horizontal', color: '#F43F5E', route: 'Debts' },
+                            { key: 'savings', label: lang === 'ar' ? 'الادخار' : 'Savings', icon: 'flag', color: '#F97316', route: 'SavingsGoals' },
+                            { key: 'analytics', label: t('analytics', lang), icon: 'stats-chart', color: colors.primary, route: 'Charts' },
+                        ].map((a) => (
+                            <TouchableOpacity key={a.key} style={[styles.quickAction, { backgroundColor: colors.card }]} onPress={() => navigation.navigate(a.route)} activeOpacity={0.7}>
+                                <View style={[styles.quickIcon, { backgroundColor: a.color + '1A' }]}>
+                                    <Ionicons name={a.icon as any} size={20} color={a.color} />
+                                </View>
+                                <Text style={[styles.quickLabel, { color: colors.textSecondary, fontSize: 11 * fs }]} numberOfLines={1}>{a.label}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
+            </View>
+
             {settings.monthlyBudget > 0 && (
                 <View style={styles.budgetContainer}>
                     <TouchableOpacity style={[styles.budgetToggle, { flexDirection: getFlexDirection(lang) }]} onPress={() => setBudgetOpen((o) => !o)} activeOpacity={0.7}>
@@ -301,13 +327,14 @@ const HomeScreen = ({ navigation }: any) => {
             <View style={styles.listContainer}>
                 <View style={[styles.listHeader, { flexDirection: getFlexDirection(lang) }]}>
                     <Text style={[styles.listTitle, { color: colors.text, fontSize: 18 * (state.settings.fontScale || 1) }]}>{t('history', lang)}</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('AllTransactions')}>
-                        <Text style={[styles.seeAll, { color: colors.textSecondary, fontSize: 13 * (state.settings.fontScale || 1) }]}>{t('seeAll', lang)}</Text>
+                    <TouchableOpacity style={[styles.seeAllBtn, { flexDirection: getFlexDirection(lang) }]} onPress={() => navigation.navigate('AllTransactions')} activeOpacity={0.7}>
+                        <Text style={[styles.seeAll, { color: colors.primary, fontSize: 13 * (state.settings.fontScale || 1) }]}>{t('seeAll', lang)}</Text>
+                        <Ionicons name={rtl ? 'chevron-back' : 'chevron-forward'} size={14} color={colors.primary} />
                     </TouchableOpacity>
                 </View>
 
                 <FlatList
-                    data={filteredTransactions.slice(0, 4)}
+                    data={filteredTransactions.slice(0, 5)}
                     keyExtractor={(item) => item.id}
                     renderItem={renderTransaction}
                     contentContainerStyle={styles.listContent}
@@ -386,8 +413,8 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     header: {
         paddingHorizontal: Layout.spacing.lg,
-        paddingTop: Layout.spacing.sm,
-        paddingBottom: 4,
+        paddingTop: Layout.spacing.xs,
+        paddingBottom: 2,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -408,14 +435,25 @@ const styles = StyleSheet.create({
     },
     toggleRow: {
         flexDirection: 'row', alignSelf: 'center', borderRadius: Layout.borderRadius.sm,
-        overflow: 'hidden', marginBottom: 4, marginTop: 4,
+        overflow: 'hidden', marginBottom: 2, marginTop: 2,
     },
     toggleBtn: {
         paddingHorizontal: Layout.spacing.md, paddingVertical: 6,
         borderRadius: Layout.borderRadius.sm,
     },
     toggleText: { fontFamily: Fonts.semiBold, fontSize: 12 },
-    summaryContainer: { paddingHorizontal: Layout.spacing.lg, marginBottom: Layout.spacing.md },
+    summaryContainer: { paddingHorizontal: Layout.spacing.lg, marginBottom: Layout.spacing.sm },
+    quickWrap: { marginBottom: Layout.spacing.xs },
+    quickToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Layout.spacing.lg, paddingVertical: 4 },
+    quickToggleLabel: { fontFamily: Fonts.semiBold, letterSpacing: 1, textTransform: 'uppercase' },
+    quickActions: { flexDirection: 'row', paddingHorizontal: Layout.spacing.lg, gap: Layout.spacing.sm, marginTop: 4 },
+    quickAction: {
+        flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: Layout.borderRadius.md, gap: 5,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 2,
+    },
+    quickIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+    quickLabel: { fontFamily: Fonts.semiBold, fontSize: 11 },
+    seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
     budgetContainer: { paddingHorizontal: Layout.spacing.lg, marginBottom: Layout.spacing.md },
     budgetToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, gap: 8 },
     budgetToggleLabel: { fontFamily: Fonts.semiBold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' },
@@ -434,7 +472,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: Layout.spacing.lg,
-        marginBottom: Layout.spacing.md,
+        marginBottom: Layout.spacing.sm,
     },
     listTitle: { fontFamily: Fonts.bold, fontSize: 18 },
     seeAll: { fontFamily: Fonts.semiBold, fontSize: 13 },

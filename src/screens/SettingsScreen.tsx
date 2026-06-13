@@ -531,6 +531,10 @@ const SettingsScreen = () => {
                     <SettingsRow icon="card" iconColor="#6366F1" label={lang === 'ar' ? 'معلومات الدفع' : 'Payment Info'} value={`${(state.paymentMethods || []).length}`} onPress={() => (navigation as any).navigate('PaymentMethods')} rtl={rtl} colors={colors} fontScale={fontScale} />
                     <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
                     <SettingsRow icon="flag" iconColor="#F97316" label={lang === 'ar' ? 'أهداف الادخار' : 'Savings Goals'} value={`${(state.savingsGoals || []).length}`} onPress={() => (navigation as any).navigate('SavingsGoals')} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
+                    <SettingsRow icon="wallet" iconColor="#0EA5E9" label={t('accountsTitle', lang)} value={`${(state.accounts || []).length}`} onPress={() => (navigation as any).navigate('Accounts')} rtl={rtl} colors={colors} fontScale={fontScale} />
+                    <View style={[styles.separator, { backgroundColor: colors.border }, rtl && { marginLeft: 0, marginRight: 52 }]} />
+                    <SettingsRow icon="swap-horizontal" iconColor="#F43F5E" label={t('debtsTitle', lang)} value={`${(state.debts || []).length}`} onPress={() => (navigation as any).navigate('Debts')} rtl={rtl} colors={colors} fontScale={fontScale} />
                 </View>
                 </CollapsibleSection>
 

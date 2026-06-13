@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { AppState, Category, Transaction, AppSettings, Currency, BudgetGoal, PaymentMethod, SavingsGoal } from '../types';
+import { AppState, Category, Transaction, AppSettings, Currency, BudgetGoal, PaymentMethod, SavingsGoal, Account, Debt } from '../types';
 import { loadData, saveData, StorageKeys } from '../utils/storage';
 import { setPrivacyMode } from '../utils/i18n';
 
@@ -36,6 +36,10 @@ const initialState: AppState = {
     budgetGoals: [],
     paymentMethods: [],
     savingsGoals: [],
+    accounts: [
+        { id: 'main', name: 'Main', icon: 'wallet', type: 'cash', color: '#3B82F6', openingBalance: 0, createdAt: 0 },
+    ],
+    debts: [],
 };
 
 // Actions
@@ -67,6 +71,12 @@ type Action =
     | { type: 'ADD_SAVINGS_GOAL'; payload: SavingsGoal }
     | { type: 'UPDATE_SAVINGS_GOAL'; payload: SavingsGoal }
     | { type: 'DELETE_SAVINGS_GOAL'; payload: string }
+    | { type: 'ADD_ACCOUNT'; payload: Account }
+    | { type: 'UPDATE_ACCOUNT'; payload: Account }
+    | { type: 'DELETE_ACCOUNT'; payload: string }
+    | { type: 'ADD_DEBT'; payload: Debt }
+    | { type: 'UPDATE_DEBT'; payload: Debt }
+    | { type: 'DELETE_DEBT'; payload: string }
     | { type: 'RESET_DATA' }
     | { type: 'IMPORT_STATE'; payload: AppState };
 
@@ -139,6 +149,12 @@ const appReducer = (state: AppState, action: Action): AppState => {
             return {
                 ...state,
                 settings: { ...state.settings, language: action.payload },
+                // Keep the default "Main" account label localized until the user renames it.
+                accounts: state.accounts.map((a) =>
+                    a.id === 'main' && (a.name === 'Main' || a.name === 'الرئيسي')
+                        ? { ...a, name: action.payload === 'ar' ? 'الرئيسي' : 'Main' }
+                        : a
+                ),
             };
         case 'SET_THEME':
             return {
@@ -219,10 +235,48 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 savingsGoals: state.savingsGoals.filter((g) => g.id !== action.payload),
             };
+        case 'ADD_ACCOUNT':
+            return {
+                ...state,
+                accounts: [...state.accounts, action.payload],
+            };
+        case 'UPDATE_ACCOUNT':
+            return {
+                ...state,
+                accounts: state.accounts.map((a) =>
+                    a.id === action.payload.id ? action.payload : a
+                ),
+            };
+        case 'DELETE_ACCOUNT':
+            // Unassign transactions that pointed at the deleted account so balances stay sane.
+            return {
+                ...state,
+                accounts: state.accounts.filter((a) => a.id !== action.payload),
+                transactions: state.transactions.map((tx) =>
+                    tx.accountId === action.payload ? { ...tx, accountId: undefined } : tx
+                ),
+            };
+        case 'ADD_DEBT':
+            return {
+                ...state,
+                debts: [action.payload, ...state.debts],
+            };
+        case 'UPDATE_DEBT':
+            return {
+                ...state,
+                debts: state.debts.map((d) =>
+                    d.id === action.payload.id ? action.payload : d
+                ),
+            };
+        case 'DELETE_DEBT':
+            return {
+                ...state,
+                debts: state.debts.filter((d) => d.id !== action.payload),
+            };
         case 'RESET_DATA':
             return initialState;
         case 'IMPORT_STATE':
-            return { ...initialState, ...action.payload, paymentMethods: action.payload.paymentMethods || [], savingsGoals: action.payload.savingsGoals || [] };
+            return { ...initialState, ...action.payload, paymentMethods: action.payload.paymentMethods || [], savingsGoals: action.payload.savingsGoals || [], accounts: action.payload.accounts || [], debts: action.payload.debts || [] };
         default:
             return state;
     }
@@ -257,13 +311,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 if (mergedSettings.primaryColor === '#4F46E5') {
                     mergedSettings.primaryColor = '#3B82F6';
                 }
+                // Ensure a default "Main" account exists and that legacy transactions
+                // are linked to it, so account balances reflect existing money.
+                const hasAccounts = Array.isArray(savedState.accounts) && savedState.accounts.length > 0;
+                const ensuredAccounts: Account[] = hasAccounts
+                    ? savedState.accounts
+                    : [{ id: 'main', name: mergedSettings.language === 'ar' ? 'الرئيسي' : 'Main', icon: 'wallet', type: 'cash', color: '#3B82F6', openingBalance: 0, createdAt: 0 }];
+                const ensuredTransactions: Transaction[] = hasAccounts
+                    ? (savedState.transactions || [])
+                    : (savedState.transactions || []).map((tx: Transaction) => (tx.accountId ? tx : { ...tx, accountId: 'main' }));
                 const merged: AppState = {
                     ...initialState,
                     ...savedState,
                     settings: mergedSettings,
+                    transactions: ensuredTransactions,
                     budgetGoals: savedState.budgetGoals || [],
                     paymentMethods: savedState.paymentMethods || [],
                     savingsGoals: savedState.savingsGoals || [],
+                    accounts: ensuredAccounts,
+                    debts: savedState.debts || [],
                 };
                 dispatch({ type: 'LOAD_STATE', payload: merged });
             }

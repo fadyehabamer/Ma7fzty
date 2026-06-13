@@ -45,6 +45,7 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
     const [calMonth, setCalMonth] = useState(editTx ? dayjs(editTx.date) : dayjs());
     const [type, setType] = useState<TransactionType>(editTx?.type ?? initData?.type ?? 'expense');
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(editTx?.categoryId ?? initData?.categoryId ?? null);
+    const [accountId, setAccountId] = useState<string | null>(editTx?.accountId ?? state.accounts.find((a) => a.id === 'main')?.id ?? state.accounts[0]?.id ?? null);
     const [selectorWidth, setSelectorWidth] = useState(0);
     const [showCalc, setShowCalc] = useState(false);
     const [showVoice, setShowVoice] = useState(false);
@@ -131,6 +132,7 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                     note,
                     imageUri: imageUri || undefined,
                     type,
+                    accountId: accountId || undefined,
                 },
             });
         } else {
@@ -144,6 +146,7 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                     note,
                     imageUri: imageUri || undefined,
                     type,
+                    accountId: accountId || undefined,
                 },
             });
         }
@@ -305,6 +308,43 @@ const AddTransactionScreen = ({ route, navigation }: any) => {
                             );
                         })}
                     </ScrollView>
+
+                    {/* Account / wallet */}
+                    {state.accounts.length > 0 && (
+                        <>
+                            <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 14 * fontScale }, rtl && { textAlign: 'right' }]}>{t('account', lang)}</Text>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                style={styles.categoriesScroll}
+                                contentContainerStyle={[styles.categoriesScrollContent, rtl && { flexDirection: 'row-reverse' }]}
+                                keyboardShouldPersistTaps="handled"
+                            >
+                                <TouchableOpacity
+                                    style={[styles.categoryChip, { flexDirection: getFlexDirection(lang), backgroundColor: colors.card, borderColor: colors.border }, !accountId && { backgroundColor: colors.textSecondary, borderColor: colors.textSecondary }]}
+                                    onPress={() => setAccountId(null)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="remove-circle-outline" size={18} color={!accountId ? '#FFFFFF' : colors.text} />
+                                    <Text style={[styles.chipName, { color: colors.textSecondary, fontSize: 14 * fontScale }, !accountId && { color: '#FFFFFF', fontFamily: Fonts.bold }]} numberOfLines={1}>{t('noAccount', lang)}</Text>
+                                </TouchableOpacity>
+                                {state.accounts.map((acc) => {
+                                    const isSelected = accountId === acc.id;
+                                    return (
+                                        <TouchableOpacity
+                                            key={acc.id}
+                                            style={[styles.categoryChip, { flexDirection: getFlexDirection(lang), backgroundColor: colors.card, borderColor: colors.border }, isSelected && { backgroundColor: acc.color, borderColor: acc.color }]}
+                                            onPress={() => setAccountId(acc.id)}
+                                            activeOpacity={0.7}
+                                        >
+                                            <AppIcon name={acc.icon} size={18} color={isSelected ? '#FFFFFF' : colors.text} />
+                                            <Text style={[styles.chipName, { color: colors.textSecondary, fontSize: 14 * fontScale }, isSelected && { color: '#FFFFFF', fontFamily: Fonts.bold }]} numberOfLines={1}>{acc.name}</Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
+                        </>
+                    )}
 
                     {/* Note & Photo */}
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary, fontSize: 14 * fontScale }, rtl && { textAlign: 'right' }]}>{t('note', lang)}</Text>
