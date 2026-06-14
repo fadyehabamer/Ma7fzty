@@ -85,18 +85,18 @@ const SummaryCard = ({ income, expense, currency, lang = 'en' }: Props) => {
 
                     <View style={styles.vDivider} />
 
-                    {/* Income / Expense, stacked vertically. The arrow icons are anchored to the
-                        card-edge side so the up/down icons line up directly above each other. */}
-                    <View style={[styles.statsCol, { alignItems: isAr ? 'flex-start' : 'flex-end' }]}>
-                        <View style={[styles.statItem, { flexDirection: isAr ? 'row' : 'row-reverse' }]}>
+                    {/* Income / Expense, stacked vertically. Align items stretch lets short and
+                        long values share the same container width, aligning both icons and text. */}
+                    <View style={[styles.statsCol, { alignItems: 'stretch' }]}>
+                        <View style={[styles.statItem, { flexDirection: isAr ? 'row-reverse' : 'row', justifyContent: 'space-between' }]}>
                             <Ionicons name="arrow-up" size={12} color="#86EFAC" />
-                            <Text style={[styles.statValue, { fontSize: 12 * fs }]} numberOfLines={1}>
+                            <Text style={[styles.statValue, { fontSize: 12 * fs, textAlign: isAr ? 'left' : 'right' }]} numberOfLines={1}>
                                 {formatCurrency(income, currency, lang, false)}
                             </Text>
                         </View>
-                        <View style={[styles.statItem, { flexDirection: isAr ? 'row' : 'row-reverse' }]}>
+                        <View style={[styles.statItem, { flexDirection: isAr ? 'row-reverse' : 'row', justifyContent: 'space-between' }]}>
                             <Ionicons name="arrow-down" size={12} color="#FDA4AF" />
-                            <Text style={[styles.statValue, { fontSize: 12 * fs }]} numberOfLines={1}>
+                            <Text style={[styles.statValue, { fontSize: 12 * fs, textAlign: isAr ? 'left' : 'right' }]} numberOfLines={1}>
                                 {formatCurrency(expense, currency, lang, false)}
                             </Text>
                         </View>
