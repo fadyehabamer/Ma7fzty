@@ -73,6 +73,7 @@ const RootNavigator = () => {
                         <Stack.Screen name="SavingsGoals" component={SavingsGoalsScreen} />
                         <Stack.Screen name="Accounts" component={AccountsScreen} />
                         <Stack.Screen name="Debts" component={DebtsScreen} />
+                        <Stack.Screen name="CurrencySelect" component={CurrencySelectScreen} />
                     </>
                 )}
             </Stack.Navigator>

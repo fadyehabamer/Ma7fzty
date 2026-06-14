@@ -317,9 +317,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 const ensuredAccounts: Account[] = hasAccounts
                     ? savedState.accounts
                     : [{ id: 'main', name: mergedSettings.language === 'ar' ? 'الرئيسي' : 'Main', icon: 'wallet', type: 'cash', color: '#3B82F6', openingBalance: 0, createdAt: 0 }];
-                const ensuredTransactions: Transaction[] = hasAccounts
-                    ? (savedState.transactions || [])
-                    : (savedState.transactions || []).map((tx: Transaction) => (tx.accountId ? tx : { ...tx, accountId: 'main' }));
+                // Heal any transaction whose account is missing or stale by linking it
+                // to the default "main" (or first) account, so account balances always
+                // reflect every transaction — not just those tagged with a live account.
+                const fallbackAcctId = ensuredAccounts.some((a) => a.id === 'main') ? 'main' : ensuredAccounts[0]?.id;
+                const ensuredTransactions: Transaction[] = (savedState.transactions || []).map((tx: Transaction) =>
+                    tx.accountId && ensuredAccounts.some((a) => a.id === tx.accountId)
+                        ? tx
+                        : { ...tx, accountId: fallbackAcctId });
                 const merged: AppState = {
                     ...initialState,
                     ...savedState,

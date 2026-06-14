@@ -32,12 +32,13 @@ const ARAB_CURRENCIES: Currency[] = [
     { code: 'TRY', symbol: '₺', name: 'Turkish Lira', nameAr: 'ليرة تركية', flag: '🇹🇷' },
 ];
 
-const CurrencySelectScreen = () => {
+const CurrencySelectScreen = ({ navigation }: any) => {
     const { dispatch, state } = useApp();
     const { colors } = useTheme();
     const lang = state.settings.language || 'en';
     const rtl = isRTL(lang);
     const [searchQuery, setSearchQuery] = useState('');
+    const canGoBack = !!navigation?.canGoBack?.();
 
     const filteredCurrencies = useMemo(() => {
         if (!searchQuery.trim()) return ARAB_CURRENCIES;
@@ -52,11 +53,25 @@ const CurrencySelectScreen = () => {
 
     const handleSelect = (currency: Currency) => {
         dispatch({ type: 'SET_CURRENCY', payload: currency });
+        // When opened from Settings (pushed on the stack) return to it; during
+        // first-run onboarding there's nothing to go back to and the gate flips.
+        if (canGoBack) navigation.goBack();
     };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.headerBlock}>
+                {canGoBack && (
+                    <TouchableOpacity
+                        style={[styles.backBtn, rtl ? { right: Layout.spacing.md } : { left: Layout.spacing.md }]}
+                        onPress={() => navigation.goBack()}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
+                            <Path d={rtl ? 'M5 12h14M12 5l7 7-7 7' : 'M19 12H5M12 19l-7-7 7-7'} stroke={colors.text} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                        </Svg>
+                    </TouchableOpacity>
+                )}
                 <Text style={[styles.title, { color: colors.text }]}>
                     {lang === 'ar' ? 'اختر العملة' : 'Select Currency'}
                 </Text>
@@ -113,6 +128,7 @@ const CurrencySelectScreen = () => {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     headerBlock: { paddingHorizontal: Layout.spacing.lg, paddingTop: Layout.spacing.xl, paddingBottom: Layout.spacing.sm, alignItems: 'center' },
+    backBtn: { position: 'absolute', top: Layout.spacing.xl, width: 40, height: 40, justifyContent: 'center', alignItems: 'center', zIndex: 2 },
     title: { fontFamily: Fonts.bold, fontSize: 26, marginBottom: Layout.spacing.xs },
     subtitle: { fontFamily: Fonts.regular, fontSize: 15 },
     searchContainer: { paddingHorizontal: Layout.spacing.md, marginBottom: Layout.spacing.md },

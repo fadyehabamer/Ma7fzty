@@ -55,52 +55,51 @@ const SummaryCard = ({ income, expense, currency, lang = 'en' }: Props) => {
                     </View>
                 </View>
 
-                {/* Middle: Large Balance */}
-                <View style={[styles.amountContainer, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
-                    {!hidden ? (
-                        <View style={[styles.amountWrapper, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
-                            {isAr && (
-                                <Text style={[styles.currency, { fontSize: 16 * fs, marginRight: 6 }]}>
-                                    {currency.symbol}
+                {/* Main row: large balance + vertical income/expense stack on the side */}
+                <View style={[styles.mainRow, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
+                    {/* Large Balance */}
+                    <View style={[styles.balanceCol, { alignItems: isAr ? 'flex-end' : 'flex-start' }]}>
+                        {!hidden ? (
+                            <View style={[styles.amountWrapper, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
+                                <Text
+                                    style={[styles.amount, { fontSize: 32 * fs }]}
+                                    adjustsFontSizeToFit
+                                    numberOfLines={1}
+                                    minimumFontScale={0.4}
+                                >
+                                    {balance < 0 ? '-' : ''}
+                                    {Math.abs(balance).toLocaleString('en-US', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
                                 </Text>
-                            )}
-                            <Text
-                                style={[styles.amount, { fontSize: 36 * fs }]}
-                                adjustsFontSizeToFit
-                                numberOfLines={1}
-                                minimumFontScale={0.4}
-                            >
-                                {balance < 0 ? '-' : ''}
-                                {Math.abs(balance).toLocaleString('en-US', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}
-                            </Text>
-                            {!isAr && (
-                                <Text style={[styles.currency, { fontSize: 16 * fs, marginLeft: 8 }]}>
-                                    {currency.code}
+                                {/* In Arabic the symbol sits to the left of the number; in LTR the code sits to the right. */}
+                                <Text style={[styles.currency, { fontSize: 15 * fs }]}>
+                                    {isAr ? currency.symbol : currency.code}
                                 </Text>
-                            )}
-                        </View>
-                    ) : (
-                        <Text style={[styles.amount, { fontSize: 32 * fs }]}>••••••••</Text>
-                    )}
-                </View>
-
-                {/* Bottom: Income / Expense breakdown (slim inline bar) */}
-                <View style={[styles.statsBar, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
-                    <View style={[styles.statItem, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
-                        <Ionicons name="arrow-up" size={13} color="#86EFAC" />
-                        <Text style={[styles.statValue, { fontSize: 13 * fs }]} numberOfLines={1}>
-                            {formatCurrency(income, currency, lang, false)}
-                        </Text>
+                            </View>
+                        ) : (
+                            <Text style={[styles.amount, { fontSize: 30 * fs }]}>••••••••</Text>
+                        )}
                     </View>
-                    <View style={styles.statDivider} />
-                    <View style={[styles.statItem, { flexDirection: isAr ? 'row-reverse' : 'row' }]}>
-                        <Ionicons name="arrow-down" size={13} color="#FDA4AF" />
-                        <Text style={[styles.statValue, { fontSize: 13 * fs }]} numberOfLines={1}>
-                            {formatCurrency(expense, currency, lang, false)}
-                        </Text>
+
+                    <View style={styles.vDivider} />
+
+                    {/* Income / Expense, stacked vertically. The arrow icons are anchored to the
+                        card-edge side so the up/down icons line up directly above each other. */}
+                    <View style={[styles.statsCol, { alignItems: isAr ? 'flex-start' : 'flex-end' }]}>
+                        <View style={[styles.statItem, { flexDirection: isAr ? 'row' : 'row-reverse' }]}>
+                            <Ionicons name="arrow-up" size={12} color="#86EFAC" />
+                            <Text style={[styles.statValue, { fontSize: 12 * fs }]} numberOfLines={1}>
+                                {formatCurrency(income, currency, lang, false)}
+                            </Text>
+                        </View>
+                        <View style={[styles.statItem, { flexDirection: isAr ? 'row' : 'row-reverse' }]}>
+                            <Ionicons name="arrow-down" size={12} color="#FDA4AF" />
+                            <Text style={[styles.statValue, { fontSize: 12 * fs }]} numberOfLines={1}>
+                                {formatCurrency(expense, currency, lang, false)}
+                            </Text>
+                        </View>
                     </View>
                 </View>
             </View>
@@ -110,7 +109,7 @@ const SummaryCard = ({ income, expense, currency, lang = 'en' }: Props) => {
 
 const styles = StyleSheet.create({
     container: {
-        height: 132,
+        height: 112,
         borderRadius: Layout.borderRadius.xl,
         overflow: 'hidden',
         elevation: 10,
@@ -125,7 +124,7 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         paddingTop: Layout.spacing.sm,
-        paddingBottom: 0,
+        paddingBottom: Layout.spacing.sm,
         paddingHorizontal: Layout.spacing.lg,
         justifyContent: 'space-between',
     },
@@ -149,16 +148,29 @@ const styles = StyleSheet.create({
     eyeBtn: {
         padding: 4,
     },
-    amountContainer: {
+    mainRow: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start',
+    },
+    balanceCol: {
         flex: 1,
+        justifyContent: 'center',
     },
     amountWrapper: {
         flexDirection: 'row',
         alignItems: 'baseline',
+        gap: 6,
+    },
+    vDivider: {
+        width: 1,
+        height: 36,
+        backgroundColor: 'rgba(255,255,255,0.22)',
+        marginHorizontal: 14,
+    },
+    statsCol: {
         justifyContent: 'center',
+        gap: 8,
     },
     currency: {
         fontFamily: Fonts.medium,
@@ -173,27 +185,10 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 0, height: 3 },
         textShadowRadius: 6,
     },
-    statsBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.14)',
-        marginHorizontal: -Layout.spacing.lg,
-        paddingHorizontal: Layout.spacing.lg,
-        paddingVertical: 9,
-        borderBottomLeftRadius: Layout.borderRadius.xl,
-        borderBottomRightRadius: Layout.borderRadius.xl,
-    },
     statItem: {
-        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-    },
-    statDivider: {
-        width: 1,
-        height: 16,
-        backgroundColor: 'rgba(255,255,255,0.22)',
+        gap: 5,
     },
     statValue: {
         fontFamily: Fonts.semiBold,

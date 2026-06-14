@@ -41,9 +41,14 @@ const AccountsScreen = ({ navigation }: any) => {
     const balances = useMemo(() => {
         const map: Record<string, number> = {};
         accounts.forEach((a) => { map[a.id] = a.openingBalance; });
+        // Money with no account (or a stale/deleted one) still belongs to the user,
+        // so fold it into the default "main" (or first) account. This keeps net worth
+        // in sync with the home balance instead of silently dropping orphaned money.
+        const fallbackId = map['main'] !== undefined ? 'main' : accounts[0]?.id;
         state.transactions.forEach((tx) => {
-            if (tx.accountId && map[tx.accountId] !== undefined) {
-                map[tx.accountId] += tx.type === 'income' ? tx.amount : -tx.amount;
+            const acctId = tx.accountId && map[tx.accountId] !== undefined ? tx.accountId : fallbackId;
+            if (acctId && map[acctId] !== undefined) {
+                map[acctId] += tx.type === 'income' ? tx.amount : -tx.amount;
             }
         });
         return map;

@@ -94,17 +94,7 @@ const SettingsScreen = () => {
     };
 
     const handleChangeCurrency = () => {
-        Alert.alert(
-            t('currency', lang),
-            lang === 'ar' ? 'سينقلك هذا إلى شاشة اختيار العملة.' : 'This will take you to the currency selection screen.',
-            [
-                { text: t('cancel', lang), style: 'cancel' },
-                {
-                    text: lang === 'ar' ? 'تغيير' : 'Change',
-                    onPress: () => dispatch({ type: 'SET_CURRENCY', payload: null as any }),
-                },
-            ]
-        );
+        navigation.navigate('CurrencySelect' as never);
     };
 
     const handleSaveBudget = () => {

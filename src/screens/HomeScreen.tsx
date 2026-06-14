@@ -41,7 +41,7 @@ const HomeScreen = ({ navigation }: any) => {
     const [showExportModal, setShowExportModal] = useState(false);
     const [viewMode, setViewMode] = useState<'month' | 'all'>('month');
     const [budgetOpen, setBudgetOpen] = useState(false);
-    const [actionsOpen, setActionsOpen] = useState(true);
+    const [actionsOpen, setActionsOpen] = useState(false);
     const prevTxCount = useRef(transactions.length);
 
     // When a single new transaction is added, jump to its month
