@@ -10,7 +10,10 @@
     "web": "expo start --web",
     "android:build:debug": "cd android && gradlew assembleDebug",
     "android:build:release": "cd android && gradlew assembleRelease",
-    "android:build:bundle": "cd android && gradlew bundleRelease"
+    "android:build:bundle": "cd android && gradlew bundleRelease",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "build": "expo export --platform all --output-dir dist"
   },
   "dependencies": {
     "@expo-google-fonts/cairo": "^0.4.2",
@@ -49,8 +52,11 @@
     "react-native-web": "^0.21.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.0",
     "babel-preset-expo": "~54.0.10",
+    "jest": "~29.7.0",
+    "jest-expo": "~54.0.18",
     "typescript": "~5.9.2"
   },
   "private": true,
@@ -73,5 +79,14 @@
     "xcode": {
       "uuid": "^11.1.1"
     }
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "setupFiles": [
+      "<rootDir>/jest.setup.ts"
+    ],
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/**/*.test.[jt]s?(x)"
+    ]
   }
 }

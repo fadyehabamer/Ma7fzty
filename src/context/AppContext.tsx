@@ -4,7 +4,7 @@ import { loadData, saveData, StorageKeys } from '../utils/storage';
 import { setPrivacyMode } from '../utils/i18n';
 
 // Initial State
-const initialState: AppState = {
+export const initialState: AppState = {
     transactions: [],
     categories: [
         { id: '1', name: 'Food', emoji: 'fast-food', type: 'expense', isDefault: true },
@@ -43,7 +43,7 @@ const initialState: AppState = {
 };
 
 // Actions
-type Action =
+export type Action =
     | { type: 'LOAD_STATE'; payload: AppState }
     | { type: 'SET_CURRENCY'; payload: Currency }
     | { type: 'SET_ONBOARDING_SEEN' }
@@ -81,7 +81,7 @@ type Action =
     | { type: 'IMPORT_STATE'; payload: AppState };
 
 // Reducer
-const appReducer = (state: AppState, action: Action): AppState => {
+export const appReducer = (state: AppState, action: Action): AppState => {
     switch (action.type) {
         case 'LOAD_STATE':
             return action.payload;
