@@ -34,8 +34,8 @@ This compiles the native Android app and installs it on your connected device/em
 **Option B: Cloud dev build (no Android Studio needed)**
 
 ```bash
-npx eas login   # only once
-npx eas build --profile development --platform android
+eas login   # only once
+eas build --profile development --platform android
 ```
 
 EAS returns a download link — install the resulting APK on your phone.
@@ -56,27 +56,27 @@ Open the **Ma7fzty dev build** app on your phone (NOT Expo Go) and it will conne
 
 ```bash
 # Login to your Expo account (only once)
-npx eas login
+eas login
 
 # Start the build process for Android (generates an APK)
-npx eas build --platform android --profile preview
+eas build --platform android --profile preview
 ```
 
 ### For Production (App Bundle)
 
 ```bash
 # Configure your project (only once)
-npx eas build:configure
+eas build:configure
 
 # Build for production (generates an .aab)
-npx eas build --platform android --profile production
+eas build --platform android --profile production
 ```
 
 ### Submit to Play Store
 
 ```bash
 # Submit your production build
-npx eas submit --platform android
+eas submit --platform android
 ```
 
 ---
